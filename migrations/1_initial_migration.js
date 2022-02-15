@@ -1,5 +1,6 @@
-var Migrations = artifacts.require("./Migrations.sol");
+var Admin = artifacts.require("./Admin.sol");
 
 module.exports = function(deployer) {
-  deployer.deploy(Migrations);
+  deployer.deploy(Admin);
 };
+

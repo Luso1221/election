@@ -36,19 +36,16 @@
                   <th scope="col">Votes</th>
                 </tr>
               </thead>
-              <tbody id="candidatesResults">
+              <tbody id="clientsResults">
               </tbody>
             </table>
             <hr/>
-            <form onSubmit="App.castVote(); return false;">
-              <div class="form-group">
-                <label for="candidatesSelect">Select Candidate</label>
-                <select class="form-control" id="candidatesSelect">
-                </select>
-              </div>
-              <button type="submit" class="btn btn-primary">Vote</button>
-              <hr />
-            </form>
+            <div class="form-group">
+              <label for="clientsSelect">Select Candidate</label>
+              <select class="form-control" id="clientsSelect">
+              </select>
+            </div>
+            <button type="button" onclick="App.addClient();" class="btn btn-primary">Add Client</button>
             <p id="accountAddress" class="text-center"></p>
           </div>
         </div>

@@ -1,0 +1,6 @@
+services:
+  node:
+    image: node_truffle_ganache
+    ports:
+      - "8545:8545"
+      - "3000:3000"
