@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.4.2;
+pragma solidity >=0.8;
 
+// import "hardhat/console.sol";
 contract Admin {
     // Client model
     uint constant JOIN_EVENT = 1;
@@ -27,7 +28,7 @@ contract Admin {
 
     struct CumulativeScore {
         int score;
-        uint cumulativeTime;
+        uint time;
     }
 
     //clients
@@ -36,37 +37,41 @@ contract Admin {
     //clientList
     address[] public addresses; 
     //score
-    mapping(address => CumulativeScore) private scores;
+    mapping(address => CumulativeScore) public scores;
     
+    event clientAdded(address sender, address wallet, uint256 level, uint256 experience, uint256 experienceNext, uint[] events);
+    event clientAddedEvent(address sender, uint eventCode, uint[] events);
 
     // Store client Count
     uint public clientCount;
 
     constructor () public {
     }
-
     function addClient (address wallet) public {
-        Client storage client  = clients[wallet];
-        client.isExist = true;
-        client.level = STARTING_LEVEL;
-        client.experience = STARTING_EXPERIENCE;
-        client.experienceNext = EXP_MULTIPLIER * STARTING_LEVEL;
-        // addresses.push(wallet);
+        if (!clients[wallet].isExist) {
+            Client storage client  = clients[wallet];
+            client.isExist = true;
+            client.level = STARTING_LEVEL;
+            client.experience = STARTING_EXPERIENCE;
+            client.experienceNext = EXP_MULTIPLIER * STARTING_LEVEL;
+            addresses.push(wallet);
+            emit clientAdded(msg.sender, wallet, client.level, client.experience, client.experienceNext, client.events);
+        }
     }
-
     function addClientEvent (address wallet, uint eventCode) public {
-        clients[wallet].events.push(eventCode); 
+        
+        Client storage client  = clients[wallet];
+        client.events.push(eventCode); 
+        emit clientAddedEvent(wallet, eventCode, client.events);
     }
 
     function getClient (address wallet) public view returns (uint256, uint256, uint256, uint[] memory) {
-        Client memory client = clients[wallet];
-        return (client.level, client.experience, client.experienceNext, client.events);
+        return (clients[wallet].level, clients[wallet].experience, clients[wallet].experienceNext, clients[wallet].events);
     }
-
-    function getAll () public view returns (address[] memory) {
+    function getAddresses () public view returns (address[] memory) {
         return addresses;
     }
-
+    
     function saveCreditEvent (address wallet) public {
         // require a valid client
         uint[] memory creditEventScores = clients[wallet].events;
@@ -98,13 +103,18 @@ contract Admin {
 
     function gainExperience (address wallet) public {
         //increment experience
-        clients[wallet].experience = clients[wallet].experience + 1;
+        Client storage client  = clients[wallet];
+        client.experience = clients[wallet].experience + 1;
         //check if enough exp to lv up, client gains level
-        if (clients[wallet].experience == clients[wallet].experienceNext) {
-            clients[wallet].level++;
-            clients[wallet].experienceNext = clients[wallet].level * STARTING_LEVEL;
-            clients[wallet].experience = 0;
+        if (client.experience == client.experienceNext) {
+            client.level++;
+            client.experienceNext = client.level * STARTING_LEVEL;
+            client.experience = 0;
         }
+    }
+
+    function calculateCreditScore () public {
+        
     }
 
 }
