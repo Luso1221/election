@@ -2,7 +2,6 @@ App = {
   web3Provider: null,
   contracts: {},
   account: '0x07E4bE8e931Ea6c7D694350552e127182a32f211',
-  hasVoted: false,
   runningInstance: null,
 
   init: function() {
@@ -63,47 +62,6 @@ App = {
           console.log(result);
         }
       })
-      // App.runningInstance.gainExperienceEvent().watch(function(err,result){
-      //     console.log("Client gained exp")
-      //   if(err){
-      //       console.log('error.............',err);
-      //   } else {
-      //     console.log(result);
-      //   }
-      // })
-      // App.runningInstance.getAllEvent( {fromBlock:'latest', toBlock: 'latest' }).watch(function(err,result){
-      //   console.log("Get event", result.args.addr)
-      //   if(err){
-      //       console.log('error.............',err);
-      //   } else {
-      //     console.log(result);
-      //     var loader = $("#loader");
-      //     var content = $("#content");
-      
-      //     var clientsResults = $("#clientsResults");
-      //     // Load contract data
-      //     loader.hide();
-      //     content.show();
-  
-      //     var args = result.args;
-          
-      //     var wallet = args.addr;
-      //     var level = args.level;
-      //     var experience = args.experience;
-      //     var experienceNext = args.experienceNext;
-      //     var events = args.events;
-  
-      //     // Render client Result
-      //     var clientTemplate = `<tr><th>${wallet}</th><td>${level}</td><td>${experience}</td><td>${experienceNext}</td><td>${events}</td><td>`;
-      //     clientTemplate += `<button class='btn btn-warning' onclick='App.addClientEvent(${wallet},1)'>JOIN</button>`;
-      //     clientTemplate += `<button class='btn btn-success' onclick='App.addClientEvent(${wallet},2)'>TRAIN</button>`;
-      //     clientTemplate += `<button class='btn btn-info' onclick='App.addClientEvent(${wallet},3)'>EVAL</button>`;
-      //     clientTemplate += `<button class='btn btn-danger' onclick='App.addClientEvent(${wallet},4)'>PUNISH</button>`;
-      //     clientTemplate += `<button class='btn btn-primary' onclick='App.gainExperience(${wallet})'>+EXP</button>`;
-      //     clientTemplate += `<button class='btn btn-default' onclick='App.saveCreditEvent(${wallet})'>Save credit</button></td></tr>`;
-      //     clientsResults.append(clientTemplate);
-      //   }
-      // })
       App.render();
     });
   },
@@ -138,7 +96,7 @@ App = {
         accList = acc;
         for (var i = 0; i < accList.length; i++) {
             // Render client Result
-            var clientTemplate = "<option value="+accList[i]+">" + accList[i] + "</option>";
+            var clientTemplate = "<option value='"+accList[i]+"'>" + accList[i] + "</option>";
             clientsSelect.append(clientTemplate);
         }
       }
@@ -158,21 +116,21 @@ App = {
     });
   },
   addClientEvent: function(address, eventType) {
-    App.runningInstance.addClientEvent(address, eventType, {gas:1000000}).send().then(function(){
+    App.runningInstance.addClientEvent.sendTransaction(address, eventType,{from: App.account, gas:1000000}).then(function(){
       App.render();
     }).catch(function(err) {
       console.error(err);
     });
   },
   gainExperience: function(address) {
-    App.runningInstance.gainExperience(address, {gas:1000000}).send().then(function(){
+    App.runningInstance.gainExperience.sendTransaction(address,{from: App.account, gas:1000000}).then(function(){
       App.render();
     }).catch(function(err) {
       console.error(err);
     });
   },
   saveCreditEvent: function(address) {
-    App.runningInstance.saveCreditEvent(address, {gas:1000000}).then(function(){
+    App.runningInstance.saveCreditEvent.sendTransaction(address,{from:  App.account, gas:1000000}).then(function(){
       App.render();
     }).catch(function(err) {
       console.error(err);
@@ -185,7 +143,6 @@ App = {
       for (let index = 0; index < addresses.length; index++) {
         const address = addresses[index];
 
-        
         App.runningInstance.getClient(address, {gas:1000000}).then(function(val){
           console.log(val)
           var loader = $("#loader");

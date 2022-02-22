@@ -14,6 +14,8 @@ contract Admin {
     int constant PUNISH_VALUE = -10;
     uint constant STARTING_LEVEL = 1;
     uint constant STARTING_EXPERIENCE = 0;
+    uint constant
+    EXPIRE_TIME = 86400;
     uint constant EXP_MULTIPLIER = 5;
     uint constant MAX_EVENTS = 5;
 
@@ -24,6 +26,7 @@ contract Admin {
         uint[] events;
         CumulativeScore[] scores;
         bool isExist;
+        int creditScore;
     }
 
     struct CumulativeScore {
@@ -61,7 +64,7 @@ contract Admin {
     function addClientEvent (address wallet, uint eventCode) public {
         
         Client storage client  = clients[wallet];
-        client.events.push(eventCode); 
+        client.events.push(eventCode);
         emit clientAddedEvent(wallet, eventCode, client.events);
     }
 
@@ -113,8 +116,16 @@ contract Admin {
         }
     }
 
-    function calculateCreditScore () public {
+    function calculateCreditScore (address wallet) public {
         
+        int total = 0;
+        Client storage client  = clients[wallet];
+        for (uint256 index = 0; index < client.scores.length; index++) {
+            if (client.scores[index].time > (block.timestamp - EXPIRE_TIME)){
+                total += client.scores[index].score;
+            }    
+        }
+        client.creditScore = total;
     }
 
 }
