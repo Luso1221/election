@@ -140,18 +140,18 @@ App = {
     console.log("get all clients");
     App.runningInstance.getAddresses({gas:1000000}).then(function(addresses){
       console.log("get addresses", addresses);
+      var loader = $("#loader");
+      var content = $("#content");
+      loader.hide();
+      content.show();
+  
       for (let index = 0; index < addresses.length; index++) {
         const address = addresses[index];
 
         App.runningInstance.getClient(address, {gas:1000000}).then(function(val){
           console.log(val)
-          var loader = $("#loader");
-          var content = $("#content");
-      
           var clientsResults = $("#clientsResults");
           // Load contract data
-          loader.hide();
-          content.show();
   
           
           var wallet = address;
