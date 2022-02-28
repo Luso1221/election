@@ -95,6 +95,11 @@ contract Admin {
         CumulativeScore memory cScore =  CumulativeScore(total,block.timestamp);
         clients[wallet].scores.push(cScore);
     }
+    function getCreditEvent (address wallet, uint index) public view returns (int, uint) {
+        if (index < clients[wallet].scores.length)
+            return (clients[wallet].scores[index].score, clients[wallet].scores[index].time);
+        return (0,0);
+    }
     function gainExperience (address wallet) public {
         //increment experience
         Client storage client  = clients[wallet];
@@ -106,15 +111,13 @@ contract Admin {
             client.experience = 0;
         }
     }
-    function calculateCreditScore (address wallet) public {
-        int total = 0;
+    function calculateCreditScore (address wallet) public returns (int) {
         Client storage client  = clients[wallet];
+        client.creditScore = 0;
         for (uint256 index = 0; index < client.scores.length; index++) {
             if (client.scores[index].time > (block.timestamp - EXPIRE_TIME)){
-                total += client.scores[index].score;
             }
         }
-        client.creditScore = total;
     }
     function addScore(int score, address wallet) public {
         clients[wallet].trainingScores.push(score);
@@ -125,7 +128,7 @@ contract Admin {
         int thirdQuarter = clients[wallet].trainingScores[clients[wallet].trainingScores.length/4*3];
         int interQuarter = thirdQuarter - firstQuarter;
         if (clients[wallet].prevClaimScore < (firstQuarter - interQuarter) || clients[wallet].prevClaimScore > (secondQuarter + interQuarter)) {
-            
+
         }
         return secondQuarter;
     }
