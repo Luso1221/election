@@ -26,11 +26,9 @@ contract Admin {
         uint experienceNext;
         uint[] events;
         CumulativeScore[] scores;
-        int[] trainingScores;
-        int[] evalScores;
-        int prevClaimScore;
+        int trainingScore; //ganti jadi bukan array
+        mapping(address => int)  evalScores;
         bool isExist;
-        int creditScore;
         bool isPunished;
         string publicKey;
     }
@@ -44,12 +42,13 @@ contract Admin {
     //clientList
     address[] public addresses; 
     //score
+    address[] public punishList;
     mapping(address => CumulativeScore) public scores;
     event clientAdded(address sender, address wallet, uint256 level, uint256 experience, uint256 experienceNext, uint[] events);
     event clientAddedEvent(address sender, uint eventCode, uint[] events);
     // Store client Count
     uint public clientCount;
-    function addClient (address wallet, bool isReviewer) public {
+    function addClient (address wallet) public {
         if (!clients[wallet].isExist) {
             Client storage client  = clients[wallet];
             client.isExist = true;
@@ -110,78 +109,81 @@ contract Admin {
         }
     }
     function calculateCreditScore (address wallet) public view returns (int) {
-        Client memory client  = clients[wallet];
-        client.creditScore = 0;
+        Client storage client  = clients[wallet];
+        int creditScore = 0;
         for (uint256 index = 0; index < client.scores.length; index++) {
             if (client.scores[index].time > (block.timestamp - EXPIRE_TIME)){
                  int freshNess = (int(EXPIRE_TIME) - (int(block.timestamp) - int(client.scores[index].time)))*100 / int(EXPIRE_TIME) ;
-                client.creditScore += client.scores[index].score * freshNess / 100;
+                
+                creditScore += client.scores[index].score * freshNess / 100;
             }
         }
-        return client.creditScore;
+        return creditScore;
     }
-    function addScore(int score, address wallet) public {
-        clients[wallet].trainingScores.push(score);
+    function setScore(int score, address wallet) public {
+        clients[wallet].trainingScore = score;
     }
     function calculateWorkerContribution(address wallet) public view returns (int) {
+        int[] memory trainingScores = clients[wallet].trainingScores;
         sort(clients[wallet].trainingScores);
-        Client memory client = clients[wallet];
-        int firstQuartile = client.trainingScores[client.trainingScores.length/4];
-        int secondQuartile = client.trainingScores[client.trainingScores.length/2];
-        int thirdQuartile = client.trainingScores[client.trainingScores.length/4*3];
+        Client storage client = clients[wallet];
+        int firstQuartile = trainingScores[trainingScores.length/4];
+        int secondQuartile = trainingScores[client.trainingScores.length/2];
+        int thirdQuartile = trainingScores[client.trainingScores.length/4*3];
         int interQuartile = thirdQuartile - firstQuartile;
         if (client.prevClaimScore < (firstQuartile - interQuartile) || client.prevClaimScore > (secondQuartile + interQuartile)) {
             //punish
-            // clients[wallet].isPunished = true;
+            punishList.push(wallet);
         }
         return secondQuartile;
     }
-    function calculateReviewerContribution(address wallet) public view returns (int) {
-        sort(clients[wallet].evalScores);
-        int minDifference = 0;
-        int maxDifference = 0;
-        int difference = 0;
-        int normalDifference = 0;
-        for (uint256 index = 0; index < addresses.length; index++) {
-            if (addresses[index] != wallet) {
-                int total = 0;
-                Client memory client = clients[addresses[index]];
-                for (uint256 j = 0; j < client.evalScores.length; j++) {  
-                    total += client.evalScores[j];
-                }
+    // function calculateReviewerContribution(address wallet) public view returns (int) {
+    //     int[] memory evalScores = clients[wallet].evalScores;
+    //     sort(clients[wallet].evalScores);
+    //     int minDifference = 0;
+    //     int maxDifference = 0;
+    //     int difference = 0;
+    //     int normalDifference = 0;
+    //     for (uint256 index = 0; index < addresses.length; index++) {
+    //         if (addresses[index] != wallet) {
+    //             int[] memory evalScores = clients[wallet].evalScores;
+    //             int total = 0;
+    //             Client memory client = clients[addresses[index]];
+    //             for (uint256 j = 0; j < client.evalScores.length; j++) {  
+    //                 total += client.evalScores[j];
+    //             }
                 
-                int firstQuarter = client.evalScores[client.evalScores.length/4];
-                int secondQuarter = client.evalScores[client.evalScores.length/2];
-                int thirdQuarter = client.evalScores[client.evalScores.length/4*3];
-                int interQuarter = thirdQuarter - firstQuarter;
-                if (client.prevClaimScore < (firstQuarter - interQuarter)) {
-                    difference = abs((firstQuarter - interQuarter) - secondQuarter);
-                } else if (client.prevClaimScore > (secondQuarter + interQuarter)) {
-                    difference = abs((thirdQuarter + interQuarter) - secondQuarter);
-                } else {
-                    difference = abs(total - secondQuarter);
-                }
-                if (maxDifference < difference) {
-                    maxDifference = difference;
-                }
-                if (minDifference > difference) {
-                    minDifference = difference;
-                }
-            }
-        }
-        normalDifference = 1 - ((difference - minDifference)/(maxDifference - minDifference));
-        return normalDifference;
-    }
+    //             int firstQuarter = client.evalScores[client.evalScores.length/4];
+    //             int secondQuarter = client.evalScores[client.evalScores.length/2];
+    //             int thirdQuarter = client.evalScores[client.evalScores.length/4*3];
+    //             int interQuarter = thirdQuarter - firstQuarter;
+    //             if (client.prevClaimScore < (firstQuarter - interQuarter)) {
+    //                 difference = abs((firstQuarter - interQuarter) - secondQuarter);
+    //             } else if (client.prevClaimScore > (secondQuarter + interQuarter)) {
+    //                 difference = abs((thirdQuarter + interQuarter) - secondQuarter);
+    //             } else {
+    //                 difference = abs(total - secondQuarter);
+    //             }
+    //             if (maxDifference < difference) {
+    //                 maxDifference = difference;
+    //             }
+    //             if (minDifference > difference) {
+    //                 minDifference = difference;
+    //             }
+    //         }
+    //     }
+    //     normalDifference = 1 - ((difference - minDifference)/(maxDifference - minDifference));
+    //     return normalDifference;
+    // }
     function setTrainingScores (address wallet, int[] memory _scores) public {
         clients[wallet].trainingScores = _scores;
     }
-    function setEvalScores (address wallet, int[] memory _scores) public {
-        clients[wallet].evalScores = _scores;
-    }
-
-    function getClientScore (address wallet) public view returns (int) {
-        return clients[wallet].creditScore;
-    }
+    // function setEvalScores (address wallet, int[] memory _scores) public {
+    //     clients[wallet].evalScores = _scores;
+    // }
+    // function getClientScore (address wallet) public view returns (int) {
+    //     return clients[wallet].creditScore;
+    // }
     function getCreditEvent (address wallet, uint index) public view returns (int, uint) {
         if (index < clients[wallet].scores.length)
             return (clients[wallet].scores[index].score, clients[wallet].scores[index].time);

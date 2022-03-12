@@ -12,7 +12,7 @@ describe('Start', function () {
 
     beforeEach('deploy contract', async function () {
       SC = await Admin.new();
-      for (let index = 0; index < 5; index++) {
+      for (let index = 0; index < 10; index++) {
         await SC.addClientEvent(client, 1, {
           from: client
         });
@@ -21,7 +21,7 @@ describe('Start', function () {
       await SC.saveCreditEvent(client, {from: client});
       
       let creditEvents = [];
-      for (let index = 0; index < 5; index++) {
+      for (let index = 0; index < 10; index++) {
         let creditEvent = await SC.getCreditEvent(client,index,{from:client});
         creditEvents.push({score:creditEvent[0].toString(),time:creditEvent[1].toString()})
       }
@@ -49,9 +49,8 @@ describe('Start', function () {
     });
     it("Credit score after time + 1D", async function() {
 
-      await timeMachine.advanceTimeAndBlock(86400);
+      await timeMachine.advanceTimeAndBlock(43200);
       
-
       creditScore = await SC.calculateCreditScore(client, {from: client});
 
       console.log("Credit score after 1d :",creditScore.toString());
