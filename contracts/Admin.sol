@@ -46,6 +46,7 @@ contract Admin {
     mapping(address => CumulativeScore) public scores;
     event clientAdded(address sender, address wallet, uint256 level, uint256 experience, uint256 experienceNext, uint[] events);
     event clientAddedEvent(address sender, uint eventCode, uint[] events);
+    event sortedArray(int[] arr);
     // Store client Count
     uint public clientCount;
     function addClient (address wallet) public {
@@ -123,51 +124,50 @@ contract Admin {
     function setScore(int score, address wallet) public {
         clients[wallet].trainingScore = score;
     }
-    function calculateWorkerContribution(address wallet) public view returns (int) {
-        int totalReviewScore = 0;
-        int[] memory scores;
-        Client storage client = clients[wallet];
+    function setEvalScore(int score, address worker, address reviewer) public {
+        clients[reviewer].evalScores[worker] = score;
+    }
+    function calculateWorkerContribution(address wallet) public  returns (int) {
+        int[] memory _scores = new int[](addresses.length);
         for (uint256 index = 0; index < addresses.length; index++) {
-            scores.push(clients[addresses[index]].evalScores[wallet]);
+            if (addresses[index] != wallet) {
+                _scores[index] = (clients[addresses[index]].evalScores[wallet]);
+            }
         }
-        sort(scores);
-        int firstQtr;
-        int secondQtr;
-        int thirdQtr;
-        (firstQtr, secondQtr, thirdQtr) = getQuarters(scores);
-        int interQtr = thirdQtr - firstQtr;
-        if (clients[wallet].trainingScore < firstQtr - interQtr || clients[wallet.trainingScore > thirdQtr + interQtr ) {
+        int[] memory sortedScores = sort(_scores);
+        int[] memory quarters = new int[](3);
+        (quarters[0], quarters[1], quarters[2]) = getQuarters(sortedScores);
+        int interQtr = quarters[2] - quarters[0];
+        if (clients[wallet].trainingScore < quarters[0] - interQtr || clients[wallet].trainingScore > quarters[2] + interQtr ) {
             //punish
             punishList.push(wallet);
         }
-        return secondQtr;
+        return quarters[2];
     }
     function calculateReviewerContribution(address wallet) public view returns (int) {
-        int[] memory evalScores = clients[wallet].evalScores;
-        sort(clients[wallet].evalScores);
         int minDifference = 0;
         int maxDifference = 0;
         int difference = 0;
         int normalDifference = 0;
         for (uint256 index = 0; index < addresses.length; index++) {
             if (addresses[index] != wallet) {
-                int[] memory evalScores = clients[wallet].evalScores;
                 int total = 0;
-                Client memory client = clients[addresses[index]];
-                for (uint256 j = 0; j < client.evalScores.length; j++) {  
-                    total += client.evalScores[j];
+                int[] memory _scores = new int[](addresses.length);
+                for (uint256 index = 0; index < addresses.length; index++) {
+                    _scores[index] = (clients[addresses[index]].evalScores[wallet]);
+                    total += clients[addresses[index]].evalScores[wallet];
                 }
+                int[] memory sortedScores = sort(_scores);
+                int[] memory quarters = new int[](3);
+                (quarters[0], quarters[1], quarters[2]) = getQuarters(sortedScores);
                 
-                int firstQuarter = client.evalScores[client.evalScores.length/4];
-                int secondQuarter = client.evalScores[client.evalScores.length/2];
-                int thirdQuarter = client.evalScores[client.evalScores.length/4*3];
-                int interQuarter = thirdQuarter - firstQuarter;
-                if (client.prevClaimScore < (firstQuarter - interQuarter)) {
-                    difference = abs((firstQuarter - interQuarter) - secondQuarter);
-                } else if (client.prevClaimScore > (secondQuarter + interQuarter)) {
-                    difference = abs((thirdQuarter + interQuarter) - secondQuarter);
+                int interQtr = quarters[2] - quarters[0];
+                if (clients[wallet].trainingScore < (quarters[0] - interQtr)) {
+                    difference = abs((quarters[0] - interQtr) - quarters[1]);
+                } else if (clients[wallet].trainingScore > (quarters[1] + interQtr)) {
+                    difference = abs((quarters[2] + interQtr) - quarters[1]);
                 } else {
-                    difference = abs(total - secondQuarter);
+                    difference = abs(total - quarters[1]);
                 }
                 if (maxDifference < difference) {
                     maxDifference = difference;
@@ -191,53 +191,42 @@ contract Admin {
     function getClient (address wallet) public view returns (uint256, uint256, uint256, uint[] memory) {
         return (clients[wallet].level, clients[wallet].experience, clients[wallet].experienceNext, clients[wallet].events);
     }
-    
-    function getQuantile(int[] memory arr) public pure returns (int) { // arr is already sorted
-        int median;
-        const mid = Math.ceil(arr.length / 2);
+    // function getQuantile(int[] memory arr) public pure returns (int) { // arr is already sorted
+    //     int median;
+    //     uint mid = ceil(arr.length / 2,1);
 
-        if (arr.length % 2 == 0) {
-            median = (arr[mid] + arr[mid - 1]) / 2;
-        } else {
-            median = arr[mid - 1];
-        }
+    //     if (arr.length % 2 == 0) {
+    //         median = (arr[mid] + arr[mid - 1]) / 2;
+    //     } else {
+    //         median = arr[mid - 1];
+    //     }
 
-        return median;
+    //     return median;
+    // }
+    function getEvalScore (address worker,address reviewer) public view returns (int) {
+        return clients[reviewer].evalScores[worker];
     }
     function getQuarters(int[] memory arr) public pure returns (int,int,int) {
         int q1; 
         int q2;
         int q3; 
-        int firstHalf;
-        int  secondHalf;
-        //console.log(arr);
 
-        q2 = getQuantile(arr);
+        q1 = arr[arr.length / 4];
+        q2 = arr[arr.length / 2];
+        q3 = arr[arr.length * 3/ 4];
 
-        const mid = Math.ceil(arr.length / 2);
-        if (arr.length % 2 == 0) {
-            firstHalf = arr.slice(0, mid);
-            //console.log(firstHalf);
-
-        } else {
-            firstHalf = arr.slice(0, mid - 1);
-            //console.log(firstHalf);
-        }
-
-        secondHalf = arr.slice(mid);
-        //console.log(secondHalf);
-
-        q1 = getQuantile(firstHalf);
-        q3 = getQuantile(secondHalf);
-
-        return [q1, q2, q3];
+        return (q1, q2, q3);
+    }
+    function ceil(uint a, uint m) private pure returns (uint ) {
+        return ((a + m - 1) / m) * m;
     }
     function abs(int x) private pure returns (int) {
         return x >= 0 ? x : -x;
     }
-    function sort(int[] memory data) public pure returns (int[] memory) {
-        quickSort(data, uint(0), uint(data.length - 1));
-        return data;
+    function sort(int[] memory arr) public pure returns (int[] memory) {
+        // quickSort(arr, uint(0), uint(data.length - 1));
+        sort_array(arr);
+        return arr;
     }
     function quickSort(int[] memory arr, uint left, uint right) private pure {
         uint i = left;
@@ -258,4 +247,75 @@ contract Admin {
         if (i < right)
             quickSort(arr, i, right);
     }
+    function sort_array(int[] memory arr) private pure returns (int[] memory) {
+        uint256 l = arr.length;
+        for(uint i = 0; i < l; i++) {
+            for(uint j = i+1; j < l ;j++) {
+                if(arr[i] > arr[j]) {
+                    int temp = arr[i];
+                    arr[i] = arr[j];
+                    arr[j] = temp;
+                }
+            }
+        }
+        return arr;
+    }
+    function normalizeArray(int[] memory arr) private pure returns (int[] memory) {
+        int[] memory normalized_array = new int[](arr.length);
+        for (uint256 i = 0; i < arr.length; i++) {
+            int _max = max(arr);
+            int _min = min(arr);
+            int normalized = (arr[i] - _min) / (_max - _min);
+            normalized_array[i] = normalized;
+        }
+
+        return normalized_array;
+    }
+    function reverseNoramlizeArray(int[] memory arr) private pure returns (int[] memory){
+        int[] memory normalized = normalizeArray(arr);
+        int[] memory reversed_array = new int[](arr.length);
+        for (uint256 i = 0; i < normalized.length; i++) {
+            int reversed = 1 - normalized[i];
+            reversed_array[i] = reversed;
+        }
+
+        return reversed_array;
+    }
+    function convert2dTo1d(int[][] memory arr) public pure returns (int[] memory) {
+        int[] memory newArray = new int[](arr.length *2);
+        for (uint256 i = 0; i < arr.length; i++) {
+            for(uint256 j = 0; j < arr.length; j++) {
+                newArray[i] = arr[i][j]; 
+            }
+        }
+
+        return newArray;
+    }
+    // function convert2dTo1d(int[] memory arr) public pure returns (int[][] memory) {
+        
+    //     int[] memory newArray = new int[](arr.length/2);
+    //     int number_of_element_per_row = addresses.length;
+    //     while(arr.length) newArray.push(arr.splice(0, number_of_element_per_row));
+            
+    //     return newArray;
+    // }
+    function min(int[] memory arr) public pure returns (int) {
+        int val = arr[0];
+        for (uint256 index = 0; index < arr.length; index++) {
+            if (val > arr[index]) {
+                val = arr[index];
+            }
+        }
+        return val;
+    } 
+    function max(int[] memory arr) public pure returns (int) {
+        int val = arr[0];
+        for (uint256 index = 0; index < arr.length; index++) {
+            if (val < arr[index]) {
+                val = arr[index];
+            }
+        }
+        return val;
+    } 
+    
 }
