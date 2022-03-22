@@ -19,6 +19,8 @@ contract Admin {
     uint constant MAX_EVENTS = 5;
 
     struct Client {
+        //training score for worker
+        //training score for reviewer
         uint level;
         uint experience;
         uint experienceNext;
@@ -147,31 +149,33 @@ contract Admin {
         int maxDifference = 0;
         int difference = 0;
         int normalDifference = 0;
-        int total = 0;
-        int[] memory _scores = new int[](addresses.length); 
-        for (uint256 j = 0; j < addresses.length; j++) {
-            if (addresses[j] != wallet) {
-                _scores[j] = (clients[addresses[j]].evalScores[wallet]);
-                total += clients[addresses[j]].evalScores[wallet];
+        for (uint256 index = 0; index < addresses.length; index++) {
+            if (addresses[index] != wallet) {
+                int total = 0;
+                int[] memory _scores = new int[](addresses.length);
+                for (uint256 j = 0; j < addresses.length; index++) {
+                    _scores[j] = (clients[addresses[j]].evalScores[wallet]);
+                    total += clients[addresses[j]].evalScores[wallet];
+                }
+                int[] memory sortedScores = sort(_scores);
+                int[] memory quarters = new int[](3);
+                (quarters[0], quarters[1], quarters[2]) = getQuarters(sortedScores);
+                
+                int interQtr = quarters[2] - quarters[0];
+                if (clients[wallet].trainingScore < (quarters[0] - interQtr)) {
+                    difference = abs((quarters[0] - interQtr) - quarters[1]);
+                } else if (clients[wallet].trainingScore > (quarters[1] + interQtr)) {
+                    difference = abs((quarters[2] + interQtr) - quarters[1]);
+                } else {
+                    difference = abs(total - quarters[1]);
+                }
+                if (maxDifference < difference) {
+                    maxDifference = difference;
+                }
+                if (minDifference > difference) {
+                    minDifference = difference;
+                }
             }
-        } //get 
-        int[] memory sortedScores = sort(_scores);
-        int[] memory quarters = new int[](3);
-        (quarters[0], quarters[1], quarters[2]) = getQuarters(sortedScores);
-        
-        int interQtr = quarters[2] - quarters[0];
-        if (clients[wallet].trainingScore < (quarters[0] - interQtr)) {
-            difference = abs((quarters[0] - interQtr) - quarters[1]);
-        } else if (clients[wallet].trainingScore > (quarters[1] + interQtr)) {
-            difference = abs((quarters[2] + interQtr) - quarters[1]);
-        } else {
-            difference = abs(total - quarters[1]);
-        }
-        if (maxDifference < difference) {
-            maxDifference = difference;
-        }
-        if (minDifference > difference) {
-            minDifference = difference;
         }
         normalDifference = 1 - ((difference - minDifference)/(maxDifference - minDifference));
         return normalDifference;
