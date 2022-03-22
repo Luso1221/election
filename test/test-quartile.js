@@ -6,6 +6,7 @@ const timeMachine = require("./helper/time-machine");
 describe('Test quartile', function () {
   contract('Admin', function () {
     let SC;
+    let arr = [24,26,29,35,48,72,150,161,181,183,183];
 
     beforeEach('Deploy contract', async function () {
       SC = await Admin.new();
@@ -13,13 +14,20 @@ describe('Test quartile', function () {
 
     it("Get quartiles", async function() {
 
-      let arr = [24,26,29,35,48,72,150,161,181,183,183];
       
       let quartiles = await SC.getQuarters(arr);
 
-      console.log("Q1:",quartiles[0]);
-      console.log("Q2:",quartiles[1]);
-      console.log("Q3:",quartiles[2]);
+      console.log("Q1:",quartiles[0].toString());
+      console.log("Q2:",quartiles[1].toString());
+      console.log("Q3:",quartiles[2].toString());
+
+    });
+    it("Get median", async function() {
+
+      
+      let median = await SC.getQuantile(arr);
+
+      console.log("median :",median);
 
     });
     it("Test sort", async function(){
