@@ -47,20 +47,29 @@ describe('Stage test', function () {
 //  the base deposit value , the total reward for this task R, the minimum clients
 //  level lmin, and reputation Cmin to join the task.
       await SC.addClient(client);
+      //0 level, 1 experience, 2 experienceNext, 3 events
+      let clientData = await SC.getClient(client, {
+        from: client
+      });
+      
 
       let taskTargetAccuracy = 90; // accuracy
       let minClientLevel = 1;
       let minimumReputation = 0;
       let currentTime = new Date();
       let registrationTimeout = datefns.addDays(currentTime,1);
-      
-      
+     
       //combo 
       
       
 
       // total deposit = beta+ lmin/li * beta + min reputation / current reputation  * beta
-      minimumDeposit = baseDeposit + minClientLevel/client.
+      let minimumDeposit = baseDeposit + minClientLevel/clientData[0] * baseDeposit + minimumReputation / 1 * baseDeposit;
+
+      client.deposit(minimumDeposit)
+
+      //prolong registration step?
+
     });
   });
 });

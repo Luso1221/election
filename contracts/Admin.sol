@@ -37,6 +37,7 @@ contract Admin {
         int score;
         uint time;
     }
+    mapping(address => bool) public punishMap;
     //clients
     mapping(address => Client) public clients;
     //clientList
@@ -47,6 +48,9 @@ contract Admin {
     event clientAdded(address sender, address wallet, uint256 level, uint256 experience, uint256 experienceNext, uint[] events);
     event clientAddedEvent(address sender, uint eventCode, uint[] events);
     event sortedArray(int[] arr);
+    event maliciousClient(address client);
+    event Deposited(address sender, uint value);
+    event Withdrawn(address sender, uint balance);
     // Store client Count
     uint public clientCount;
     function addClient (address wallet) public {
@@ -57,9 +61,20 @@ contract Admin {
             client.experience = STARTING_EXPERIENCE;
             client.experienceNext = EXP_MULTIPLIER * STARTING_LEVEL;
             addresses.push(wallet);
-            emit clientAdded(msg.sender, wallet, client.level, client.experience, client.experienceNext, client.events);
+            // emit clientAdded(msg.sender, wallet, client.level, client.experience, client.experienceNext, client.events);
         }
     }
+    function deposit() public payable {
+        emit Deposited(msg.sender, msg.value);
+    }
+
+    function withdraw() public {
+        uint256 balance = address(this).balance;
+        payable(msg.sender).transfer(balance);
+        emit Withdrawn(msg.sender, balance);
+    }
+
+
     function setPrivateKey(address wallet, string memory key) public {
         clients[wallet].publicKey = key;
     }
@@ -127,76 +142,111 @@ contract Admin {
     function setEvalScore(int score, address worker, address reviewer) public {
         clients[reviewer].evalScores[worker] = score;
     }
-    function calculateWorkerContribution(address wallet) public  returns (int) {
+    function calculateWorkerContribution(address wallet) public returns (int) {
+        int score = clients[wallet].trainingScore;
         int[] memory scores = new int[](addresses.length);
-        for (uint256 index = 0; index < addresses.length; index++) {
-            if (addresses[index] != wallet) {
-                scores[index] = (clients[addresses[index]].evalScores[wallet]);
+        for (uint256 i = 0; i < addresses.length; i++) {
+            if (addresses[i] != wallet) {
+                scores[i] = (clients[addresses[i]].evalScores[wallet]);
             }
         }
         int[] memory sortedScores = sort(scores);
         int[] memory quarters = new int[](3);
         (quarters[0], quarters[1], quarters[2]) = getQuarters(sortedScores);
         int interQtr = quarters[2] - quarters[0];
-        if (clients[wallet].trainingScore < quarters[0] - interQtr || clients[wallet].trainingScore > quarters[2] + interQtr ) {
+        if (score < quarters[0] - interQtr || score > quarters[2] + interQtr ) {
             //punish
-            punishList.push(wallet);
+            if (!punishMap[wallet]) {
+                punishList.push(wallet);
+                punishMap[wallet] = true;
+            }
+            
         }
         return quarters[1];
     }
-    function calculateReviewerContribution(address wallet) public view returns (int) {
+    function calculateReviewerContribution(address reviewer) public returns (int[] memory) {
         int minDifference = 0;
         int maxDifference = 0;
-        int difference = 0;
-        int normalDifference = 0;
-        for (uint256 index = 0; index < addresses.length; index++) {
-            if (addresses[index] != wallet) {
-                int total = 0;
+        int[] memory differences = new int[](addresses.length);
+        for (uint256 i = 0; i < addresses.length; i++) {
+            if (addresses[i] != reviewer) {
+                // int total = 0;
                 int[] memory _scores = new int[](addresses.length);
-                for (uint256 j = 0; j < addresses.length; index++) {
-                    _scores[j] = (clients[addresses[j]].evalScores[wallet]);
-                    total += clients[addresses[j]].evalScores[wallet];
+                int difference = 0;
+                for (uint256 j = 0; j < addresses.length; j++) {
+                    if (addresses[j] != addresses[i]) {
+                        _scores[j] = (clients[addresses[j]].evalScores[addresses[i]]);
+                        // total += clients[addresses[j]].evalScores[addresses[i]];
+                    }
                 }
                 int[] memory sortedScores = sort(_scores);
                 int[] memory quarters = new int[](3);
                 (quarters[0], quarters[1], quarters[2]) = getQuarters(sortedScores);
                 
                 int interQtr = quarters[2] - quarters[0];
-                if (clients[wallet].trainingScore < (quarters[0] - interQtr)) {
-                    difference = abs((quarters[0] - interQtr) - quarters[1]);
-                } else if (clients[wallet].trainingScore > (quarters[1] + interQtr)) {
+                int reviewerScoreOnThisClient =  clients[reviewer].evalScores[addresses[i]];
+                if (isReviewerScoreTooHigh(reviewerScoreOnThisClient, quarters, interQtr)) {
                     difference = abs((quarters[2] + interQtr) - quarters[1]);
+                    if (!punishMap[reviewer]) {
+                        punishList.push(reviewer);
+                        punishMap[reviewer] = true;
+                    }
+                } else if (isReviewerScoreTooLow(reviewerScoreOnThisClient, quarters, interQtr)) {
+                    difference = abs((quarters[0] - interQtr) - quarters[1]);
+                    if (!punishMap[reviewer]) {
+                        punishList.push(reviewer);
+                        punishMap[reviewer] = true;
+                    }
                 } else {
-                    difference = abs(total - quarters[1]);
+                    difference = abs(reviewerScoreOnThisClient - quarters[1]);
                 }
-                if (maxDifference < difference) {
+                if (difference > maxDifference) {
                     maxDifference = difference;
                 }
-                if (minDifference > difference) {
+                if (difference < minDifference) {
                     minDifference = difference;
                 }
+                differences[i] = difference;
             }
         }
-        normalDifference = 1 - ((difference - minDifference)/(maxDifference - minDifference));
-        return normalDifference;
+        differences = normalizeArray(differences);
+        return differences;
+    }
+    function isReviewerScoreTooHigh (int reviewerScoreOnThisClient, int[] memory quarters, int interQtr) public pure returns (bool) {
+        if (reviewerScoreOnThisClient > (quarters[2] + interQtr)) {
+            return true;
+        } 
+        return false;
+    }
+    function isReviewerScoreTooLow (int reviewerScoreOnThisClient, int[] memory quarters, int interQtr) public pure returns (bool) {
+        if (reviewerScoreOnThisClient < (quarters[0] - interQtr)) {
+            return true;
+        } 
+        return false;
     }
     function getCreditEvent (address wallet, uint index) public view returns (int, uint) {
         if (index < clients[wallet].scores.length)
             return (clients[wallet].scores[index].score, clients[wallet].scores[index].time);
         return (0,0);
     }
+    function getPunishedList () public view returns (address[] memory){
+        return punishList;
+    }
     function getAddresses () public view returns (address[] memory) {
         return addresses;
+    }
+    function getClientCount () public view returns (uint) {
+        return addresses.length;
     }
     function getClient (address wallet) public view returns (uint256, uint256, uint256, uint[] memory) {
         return (clients[wallet].level, clients[wallet].experience, clients[wallet].experienceNext, clients[wallet].events);
     }
     function getMedian(int[] memory arr) public pure returns (int) { // arr is already sorted
         int median;
-        uint mid = ceil(arr.length / 2,1);
+        uint mid = arr.length / 2 - 1;
 
         if (arr.length % 2 == 0) {
-            median = arr[(mid - 1 + mid + 1) / 2];
+            median = (arr[mid-1] + arr[mid+1]) / 2;
         } else {
             median = arr[mid];
         }
@@ -245,27 +295,21 @@ contract Admin {
         int q1; 
         int q2;
         int q3; 
-        //console.log(arr);
 
         int[] memory firstHalf;
         int[] memory secondHalf;
-        //console.log(arr);
 
         q2 = getMedian(arr);
 
         uint mid = ceil(arr.length /2, 1);
         if (arr.length % 2 == 0) {
             firstHalf = getSlice(0, mid,arr);
-            //console.log(firstHalf);
 
         } else {
             firstHalf = getSlice(0, mid - 1,arr);
-            //console.log(firstHalf);
         }
 
         secondHalf = getSlice(mid, arr.length-1, arr);
-        //console.log(secondHalf);
-        //console.log(secondHalf);
 
         q1 = getMedian(firstHalf);
         q3 = getMedian(secondHalf);
