@@ -1,0 +1,44 @@
+[
+    {
+      "index": 0,
+      "name": "Rosetta Richardson",
+      "gender": "female",
+      "company": "BITTOR",
+      "email": "rosettarichardson@bittor.com"
+    },
+    {
+      "index": 1,
+      "name": "Hines Buckner",
+      "gender": "male",
+      "company": "CANOPOLY",
+      "email": "hinesbuckner@canopoly.com"
+    },
+    {
+      "index": 2,
+      "name": "Valerie Witt",
+      "gender": "female",
+      "company": "EXOPLODE",
+      "email": "valeriewitt@exoplode.com"
+    },
+    {
+      "index": 3,
+      "name": "Annabelle Sellers",
+      "gender": "female",
+      "company": "CHORIZON",
+      "email": "annabellesellers@chorizon.com"
+    },
+    {
+      "index": 4,
+      "name": "Chapman Clements",
+      "gender": "male",
+      "company": "EBIDCO",
+      "email": "chapmanclements@ebidco.com"
+    },
+    {
+      "index": 5,
+      "name": "Nicole Mcclure",
+      "gender": "female",
+      "company": "COMDOM",
+      "email": "nicolemcclure@comdom.com"
+    }
+  ]
