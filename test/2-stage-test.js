@@ -2,6 +2,7 @@ var Admin = artifacts.require("./Admin.sol");
 const timeMachine = require("./helper/time-machine");
 const objectHash = require("object-hash");
 const datefns = require("date-fns");
+const ethCrypto = require('eth-crypto');
 // const truffleAssert = require('truffle-assertions');
 
 // Start stage
@@ -17,6 +18,9 @@ describe('Stage test', function () {
     let SC;
     let model;
       
+    const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
+      modulusLength: 2048,
+    });
     beforeEach('deploy contract', async function () {
         SC = await Admin.new();
     })
@@ -37,15 +41,7 @@ describe('Stage test', function () {
       let ipfsHash = objectHash(ipfsData);
       console.log(ipfsData);
       console.log(ipfsHash);
-      // let creditScore = await SC.calculateCreditScore(client, {from: client});
-
-      // console.log("Credit score before advancing time",creditScore.toString());
-
-      // latestNewBlock = await web3.eth.getBlock('latest');
-      // console.log("Timestamp diff",latestNewBlock.timestamp - latestBlock.timestamp);
-//       task target (e.g., achieving 90% accuracy),
-//  the base deposit value , the total reward for this task R, the minimum clients
-//  level lmin, and reputation Cmin to join the task.
+      
       await SC.addClient(client);
       //0 level, 1 experience, 2 experienceNext, 3 events
       let clientData = await SC.getClient(client, {
@@ -60,16 +56,41 @@ describe('Stage test', function () {
       let registrationTimeout = datefns.addDays(currentTime,1);
      
       //combo 
+      const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
+        modulusLength: 2048,
+      });
       
-      
+      await SC.setPublicKey(client, publicKey.toString());
 
       // total deposit = beta+ lmin/li * beta + min reputation / current reputation  * beta
       let minimumDeposit = baseDeposit + minClientLevel/clientData[0] * baseDeposit + minimumReputation / 1 * baseDeposit;
 
-      client.deposit(minimumDeposit)
+      client.deposit(minimumDeposit);
 
       //prolong registration step?
 
     });
+    it("commit-train stage", async function(){
+      
+      const randomSecretKey  = crypto.generateKey('hmac', { length: 64 }, (err, key) => {
+        if (err) throw err;
+        console.log(key.export().toString('hex'));  // 46e..........620
+      });
+
+      const signature = crypto.sign('sha',randomSecretKey,privateKey);
+
+      const identity = ethCrypto.createIdentity();
+      const publicKey = ethCrypto.publicKeyByPrivateKey(
+        identity.privateKey
+      );
+      const privateKey = ethCrypto.publicKeyByPrivateKey(
+        identity.privateKey
+      );
+      
+
+
+
+
+    })
   });
 });
