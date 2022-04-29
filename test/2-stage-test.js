@@ -1,7 +1,6 @@
 var Admin = artifacts.require("./Admin.sol");
-const timeMachine = require("./helper/time-machine");
-const objectHash = require("object-hash");
 const datefns = require("date-fns");
+const EthCrypto = require("eth-crypto");
 // const truffleAssert = require('truffle-assertions');
 
 // Start stage
@@ -15,7 +14,6 @@ describe('Stage test', function () {
     const client = accounts[0]; 
     const baseDeposit = 100;
     let SC;
-    let model;
       
     beforeEach('deploy contract', async function () {
         SC = await Admin.new();
@@ -34,18 +32,10 @@ describe('Stage test', function () {
       }
       // Y ipfs
       // 1 = IPFS(M(0) | dtest | task desc | timestamp now | nonce )
-      let ipfsHash = objectHash(ipfsData);
+      let ipfsHash =  EthCrypto.hash.keccak256(ipfsData);
       console.log(ipfsData);
       console.log(ipfsHash);
-      // let creditScore = await SC.calculateCreditScore(client, {from: client});
-
-      // console.log("Credit score before advancing time",creditScore.toString());
-
-      // latestNewBlock = await web3.eth.getBlock('latest');
-      // console.log("Timestamp diff",latestNewBlock.timestamp - latestBlock.timestamp);
-//       task target (e.g., achieving 90% accuracy),
-//  the base deposit value , the total reward for this task R, the minimum clients
-//  level lmin, and reputation Cmin to join the task.
+      
       await SC.addClient(client);
       //0 level, 1 experience, 2 experienceNext, 3 events
       let clientData = await SC.getClient(client, {
@@ -60,16 +50,81 @@ describe('Stage test', function () {
       let registrationTimeout = datefns.addDays(currentTime,1);
      
       //combo 
+      // const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
+      //   modulusLength: 2048,
+      // });
       
-      
+      // await SC.setPublicKey(client, publicKey.toString());
 
       // total deposit = beta+ lmin/li * beta + min reputation / current reputation  * beta
       let minimumDeposit = baseDeposit + minClientLevel/clientData[0] * baseDeposit + minimumReputation / 1 * baseDeposit;
 
-      client.deposit(minimumDeposit)
+      await SC.deposit(minimumDeposit, {from: client});
 
+      
       //prolong registration step?
 
+    });
+    it("commit-train stage", async function(){
+      
+      const trainerIdentity = EthCrypto.createIdentity();
+      const modelOwnerIdentity = EthCrypto.createIdentity();
+      const randomSecretKey = EthCrypto.publicKeyByPrivateKey(modelOwnerIdentity.privateKey);
+      
+      
+      
+      const hashedSecretKey  = EthCrypto.hash.keccak256(randomSecretKey);
+      const secretKeySignature = EthCrypto.sign(modelOwnerIdentity.privateKey, hashedSecretKey);
+      
+      const encryptedSecretKeyObject = await EthCrypto.encryptWithPublicKey(trainerIdentity.publicKey, hashedSecretKey);
+      const encryptedSecretKey = EthCrypto.cipher.stringify(encryptedSecretKeyObject);
+      console.log({modelOwnerIdentity})
+      console.log({trainerIdentity})
+      console.log({randomSecretKey});
+      console.log({hashedSecretKey});
+      console.log({encryptedSecretKey});
+      console.log({secretKeySignature})
+      
+      const parsedSecretKey = EthCrypto.cipher.parse(encryptedSecretKey);
+      const decryptedSecretKey = await EthCrypto.decryptWithPrivateKey(trainerIdentity.privateKey,parsedSecretKey)
+
+      const model = [];
+      // try {
+
+      //   let wrongDecryptSecretKey = await EthCrypto.decryptWithPrivateKey(modelOwnerIdentity.privateKey,parsedSecretKey)
+      //   console.log({wrongDecryptSecretKey});
+      // } catch (error) {
+      //   console.log({error});
+      // }
+      const recoveredSecretKeySignature = EthCrypto.recoverPublicKey(secretKeySignature,hashedSecretKey);
+      console.log({recoveredSecretKeySignature});
+      
+      console.log({decryptedSecretKey});
+
+      const ipfsData2 = {
+        secretKeySignature : secretKeySignature,
+        encryptedSecretKey : encryptedSecretKey
+      }
+      const secretKeyHash = EthCrypto.hash.keccak256(ipfsData2);
+      
+      // let c = await SC.getClient(client);
+      // console.log({clientKey},clientKey);
+      const hashedModel = EthCrypto.hash.keccak256(model);
+      const encryptedModelObject = await EthCrypto.encryptWithPublicKey(trainerIdentity.publicKey, hashedModel);
+      const encryptedModel = EthCrypto.cipher.stringify(encryptedModelObject);
+      const modelSignature = EthCrypto.sign(trainerIdentity.privateKey, hashedModel);
+      const ipfsData3 = {
+        modelSignature : modelSignature,
+        model : encryptedModel        
+      }
+      const commitHash = EthCrypto.hash.keccak256(ipfsData3);
+
+      console.log({secretKeyHash});
+      console.log({commitHash});
+
+      //reveal train stage
+      
+      
     });
   });
 });

@@ -26,7 +26,7 @@ contract Admin {
         uint experienceNext;
         uint[] events;
         CumulativeScore[] scores;
-        int trainingScore; 
+        int trainingScore;
         mapping(address => int)  evalScores; //eval score of other workers
         bool isExist;
         bool isPunished;
@@ -75,8 +75,11 @@ contract Admin {
     }
 
 
-    function setPrivateKey(address wallet, string memory key) public {
+    function setPublicKey(address wallet, string memory key) public {
         clients[wallet].publicKey = key;
+    }
+    function setLevel(address wallet, uint level) public {
+        clients[wallet].level = level;
     }
     function addClientEvent (address wallet, uint eventCode) public {
         Client storage client  = clients[wallet];
@@ -238,8 +241,8 @@ contract Admin {
     function getClientCount () public view returns (uint) {
         return addresses.length;
     }
-    function getClient (address wallet) public view returns (uint256, uint256, uint256, uint[] memory) {
-        return (clients[wallet].level, clients[wallet].experience, clients[wallet].experienceNext, clients[wallet].events);
+    function getClient (address wallet) public view returns (uint256, uint256, uint256, uint[] memory, string memory) {
+        return (clients[wallet].level, clients[wallet].experience, clients[wallet].experienceNext, clients[wallet].events, clients[wallet].publicKey);
     }
     function getMedian(int[] memory arr) public pure returns (int) { // arr is already sorted
         int median;
