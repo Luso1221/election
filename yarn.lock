@@ -1229,7 +1229,7 @@
   "resolved" "https://registry.npmjs.org/binary-extensions/-/binary-extensions-2.2.0.tgz"
   "version" "2.2.0"
 
-"bindings@^1.5.0":
+"bindings@^1.2.1", "bindings@^1.5.0":
   "integrity" "sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ=="
   "resolved" "https://registry.npmjs.org/bindings/-/bindings-1.5.0.tgz"
   "version" "1.5.0"
@@ -1840,6 +1840,11 @@
   dependencies:
     "assert-plus" "^1.0.0"
 
+"date-fns@^2.28.0":
+  "integrity" "sha512-8d35hViGYx/QH0icHYCeLmsLmMUheMmTyV9Fcm6gvNwdw31yXXH+O85sOBJ+OLnLQMKZowvpKb6FgMIQjcpvQw=="
+  "resolved" "https://registry.npmjs.org/date-fns/-/date-fns-2.28.0.tgz"
+  "version" "2.28.0"
+
 "debug@^2.2.0", "debug@2.6.9":
   "integrity" "sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA=="
   "resolved" "https://registry.npmjs.org/debug/-/debug-2.6.9.tgz"
@@ -2418,6 +2423,19 @@
     "ethereum-cryptography" "^0.1.3"
     "rlp" "^2.2.4"
 
+"ethereumjs-utils@^5.2.5":
+  "integrity" "sha512-IkXL26c21kUKT5NQO4NFgeuYwXtqCD4dmiSWc/vivGNGwfYhEn2lYwmVIcbqVKS9yJfVEmrolWnQBuxEmTinIg=="
+  "resolved" "https://registry.npmjs.org/ethereumjs-utils/-/ethereumjs-utils-5.2.5.tgz"
+  "version" "5.2.5"
+  dependencies:
+    "bn.js" "^4.11.0"
+    "create-hash" "^1.1.2"
+    "ethjs-util" "^0.1.3"
+    "keccak" "^1.0.2"
+    "rlp" "^2.0.0"
+    "safe-buffer" "^5.1.1"
+    "secp256k1" "^3.0.1"
+
 "ethers@^4.0.40":
   "integrity" "sha512-kPltTvWiyu+OktYy1IStSO16i2e7cS9D9OxZ81q2UUaiNPVrm/RTcbxamCXF9VUSKzJIdJV68EAIhTEVBalRWg=="
   "resolved" "https://registry.npmjs.org/ethers/-/ethers-4.0.49.tgz"
@@ -2469,7 +2487,7 @@
     "@ethersproject/web" "5.6.0"
     "@ethersproject/wordlists" "5.6.0"
 
-"ethjs-util@^0.1.6", "ethjs-util@0.1.6":
+"ethjs-util@^0.1.3", "ethjs-util@^0.1.6", "ethjs-util@0.1.6":
   "integrity" "sha512-CUnVOQq7gSpDHZVVrQW8ExxUETWrnrvXYvYz55wOU8Uj4VCgw56XC2B/fVqQN+f7gmrnRHSLVnFAwsCuNwji8w=="
   "resolved" "https://registry.npmjs.org/ethjs-util/-/ethjs-util-0.1.6.tgz"
   "version" "0.1.6"
@@ -3583,6 +3601,16 @@
     "json-schema" "0.4.0"
     "verror" "1.10.0"
 
+"keccak@^1.0.2":
+  "integrity" "sha512-eZVaCpblK5formjPjeTBik7TAg+pqnDrMHIffSvi9Lh7PQgM1+hSzakUeZFCk9DVVG0dacZJuaz2ntwlzZUIBw=="
+  "resolved" "https://registry.npmjs.org/keccak/-/keccak-1.4.0.tgz"
+  "version" "1.4.0"
+  dependencies:
+    "bindings" "^1.2.1"
+    "inherits" "^2.0.3"
+    "nan" "^2.2.1"
+    "safe-buffer" "^5.1.0"
+
 "keccak@^2.0.0":
   "integrity" "sha512-m1wbJRTo+gWbctZWay9i26v5fFnYkOn7D5PCxJ3fZUGUEb49dE1Pm4BREUYCt/aoO6di7jeoGmhvqN9Nzylm3Q=="
   "resolved" "https://registry.npmjs.org/keccak/-/keccak-2.1.0.tgz"
@@ -4164,7 +4192,7 @@
   "resolved" "https://registry.npmjs.org/murmurhash3js-revisited/-/murmurhash3js-revisited-3.0.0.tgz"
   "version" "3.0.0"
 
-"nan@^2.14.0":
+"nan@^2.14.0", "nan@^2.2.1":
   "integrity" "sha512-8ZtvEnA2c5aYCZYd1cvgdnU6cqwixRoYg70xPLWUws5ORTa/lnw+u4amixRS/Ac5U5mQVgp9pnlSUnbNWFaWZQ=="
   "resolved" "https://registry.npmjs.org/nan/-/nan-2.15.0.tgz"
   "version" "2.15.0"
@@ -4868,7 +4896,7 @@
     "hash-base" "^3.0.0"
     "inherits" "^2.0.1"
 
-"rlp@^2.2.3", "rlp@^2.2.4":
+"rlp@^2.0.0", "rlp@^2.2.3", "rlp@^2.2.4":
   "integrity" "sha512-d5gdPmgQ0Z+AklL2NVXr/IoSjNZFfTVvQWzL/AM2AOcSzYP2xjlb0AC8YyCLc41MSNf6P6QVtjgPdmVtzb+4lQ=="
   "resolved" "https://registry.npmjs.org/rlp/-/rlp-2.2.7.tgz"
   "version" "2.2.7"
