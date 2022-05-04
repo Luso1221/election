@@ -59,15 +59,15 @@ describe('Start', function () {
         await SC.setEvalScore(randomValuesEven[index],clients[0],clients[index+1]);
       }
       await SC.setScore(30,clients[0])
-      let differences = await SC.calculateReviewerContribution.call(clients[1], {
+      
+      await SC.calculateReviewerContribution(clients[1], {
         from: clients[0]
       });
       
       let punishedList = await SC.getPunishedList();
       
-      console.log("Reviewer contribution :",differences);
+      // console.log("Reviewer contribution :",differences);
       console.log("Punished list :",punishedList);
-      
     });
 
     // it("Test get addresses",async function(){

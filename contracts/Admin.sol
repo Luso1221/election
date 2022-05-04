@@ -49,6 +49,7 @@ contract Admin {
     event clientAddedEvent(address sender, uint eventCode, uint[] events);
     event sortedArray(int[] arr);
     event maliciousClient(address client);
+    event getReviewerContribution(int[] differences);
     event Deposited(address sender, uint value);
     event Withdrawn(address sender, uint balance);
     // Store client Count
@@ -167,7 +168,7 @@ contract Admin {
         }
         return quarters[1];
     }
-    function calculateReviewerContribution(address reviewer) public returns (int[] memory) {
+    function calculateReviewerContribution(address reviewer) public {
         int minDifference = 0;
         int maxDifference = 0;
         int[] memory differences = new int[](addresses.length);
@@ -213,7 +214,7 @@ contract Admin {
             }
         }
         differences = normalizeArray(differences);
-        return differences;
+        emit getReviewerContribution(differences);
     }
     function isReviewerScoreTooHigh (int reviewerScoreOnThisClient, int[] memory quarters, int interQtr) public pure returns (bool) {
         if (reviewerScoreOnThisClient > (quarters[2] + interQtr)) {

@@ -59,7 +59,7 @@ describe('Stage test', function () {
       // total deposit = beta+ lmin/li * beta + min reputation / current reputation  * beta
       let minimumDeposit = baseDeposit + minClientLevel/clientData[0] * baseDeposit + minimumReputation / 1 * baseDeposit;
 
-      await SC.deposit(minimumDeposit, {from: client});
+      // await SC.deposit();
 
       
       //prolong registration step?

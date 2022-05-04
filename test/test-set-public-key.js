@@ -69,7 +69,7 @@ describe('Stage test', function () {
       
       // let c = await SC.getClient(client);
       // console.log({clientKey},clientKey);
-      let commitHash = EthCrypto.hash.keccak256();
+      // let commitHash = EthCrypto.hash.keccak256();
 
     })
 
