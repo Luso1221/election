@@ -53,7 +53,6 @@ App = {
   },
 
   render: function() {
-    var electionInstance;
     var loader = $("#loader");
     var content = $("#content");
 
@@ -69,43 +68,69 @@ App = {
     });
 
     // Load contract data
-    App.contracts.Election.deployed().then(function(instance) {
-      electionInstance = instance;
-      return electionInstance.candidatesCount();
-    }).then(function(candidatesCount) {
+    // App.contracts.Election.deployed().then(function(instance) {
+    //   electionInstance = instance;
+    //   return electionInstance.candidatesCount();
+    // }).then(function(candidatesCount) {
+    //   var candidatesResults = $("#candidatesResults");
+    //   candidatesResults.empty();
+
+    //   var candidatesSelect = $('#candidatesSelect');
+    //   candidatesSelect.empty();
+
+    //   for (var i = 1; i <= candidatesCount; i++) {
+    //     electionInstance.candidates(i).then(function(candidate) {
+    //       var id = candidate[0];
+    //       var name = candidate[1];
+    //       var voteCount = candidate[2];
+    //       var address = candidate[3];
+
+    //       // Render candidate Result
+    //       var candidateTemplate = "<tr><th>" + id + "</th><td>" + name + "</td><td>" + voteCount + "</td><td>" + address + "</td></tr>"
+    //       candidatesResults.append(candidateTemplate);
+
+    //       // Render candidate ballot option
+    //       var candidateOption = "<option value='" + id + "' >" + name + " - " + address + "</ option>"
+    //       candidatesSelect.append(candidateOption);
+    //     });
+    //   }
+    //   console.log(App.account);
+    //   return electionInstance.voters(App.account);
+    // }).then(function(hasVoted) {
+    //   // Do not allow a user to vote
+    //   if(hasVoted) {
+    //     $('form').hide();
+    //   }
+    //   loader.hide();
+    //   content.show();
+    // }).catch(function(error) {
+    //   console.warn(error);
+    // });
+    $.getJSON("http://localhost:8080/candidate",function( data ) {
       var candidatesResults = $("#candidatesResults");
       candidatesResults.empty();
 
       var candidatesSelect = $('#candidatesSelect');
       candidatesSelect.empty();
 
-      for (var i = 1; i <= candidatesCount; i++) {
-        electionInstance.candidates(i).then(function(candidate) {
+      for (var i = 0; i < data.candidatesCount; i++) {
+          var candidate = data.candidates[i];
+          console.log(candidate);
           var id = candidate[0];
           var name = candidate[1];
           var voteCount = candidate[2];
           var address = candidate[3];
 
           // Render candidate Result
-          var candidateTemplate = "<tr><th>" + id + "</th><td>" + name + "</td><td>" + voteCount + "</td><td>" + address + "</td></tr>"
+          var candidateTemplate = "<tr><td>" + id + "</td><td>" + name + "</td><td>" + voteCount + "</td><td>" + address + "</td></tr>"
           candidatesResults.append(candidateTemplate);
 
           // Render candidate ballot option
-          var candidateOption = "<option value='" + id + "' >" + name + " - " + address + "</ option>"
-          candidatesSelect.append(candidateOption);
-        });
+          // var candidateOption = "<option value='" + id + "' >" + name + " - " + address + "</ option>"
+          // candidatesSelect.append(candidateOption);
       }
-      console.log(App.account);
-      return electionInstance.voters(App.account);
-    }).then(function(hasVoted) {
-      // Do not allow a user to vote
-      if(hasVoted) {
-        $('form').hide();
-      }
-      loader.hide();
-      content.show();
-    }).catch(function(error) {
-      console.warn(error);
+        content.show();
+          loader.hide();
     });
   },
 
