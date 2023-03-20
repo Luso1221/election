@@ -19,6 +19,7 @@ contract("Election", function(accounts) {
       assert.equal(candidate[0], 1, "contains the correct id");
       assert.equal(candidate[1], "Candidate 1", "contains the correct name");
       assert.equal(candidate[2], 0, "contains the correct votes count");
+      assert.equal(candidate[3], '0x66E69B9590Bfa91DeA91059C13fbDd83c803E897', "contains the correct address");
       return electionInstance.candidates(2);
     }).then(function(candidate) {
       assert.equal(candidate[0], 2, "contains the correct id");
