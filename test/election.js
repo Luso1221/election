@@ -6,14 +6,16 @@ contract("Election", function(accounts) {
   let SC;
   let voterAccounts = [true,true,true,false,false,false,false,false,false,false];
   let maliciousAccounts = [false,true,false,false,false,true,true,true,true,true];
-  let initialModelAccuracy = 80;
+  // let initialModelAccuracy = 80;
   beforeEach('deploy contract', async function () {
     SC = await Election.new();
   });
   it('perform training simulation', async function () {
     
+    console.log("Initializing trainers and mock malicious users..")
     let candidates = [];
-    let number_of_trainers_selected = 3;
+    let voters = [];
+    // let number_of_trainers_selected = 3;
     let accounts = await web3.eth.getAccounts();
     for (let index = 0; index < accounts.length; index++) {
       await SC.addCandidate.sendTransaction("Candidate "+index,accounts[index], {from: accounts[0]});
@@ -33,9 +35,10 @@ contract("Election", function(accounts) {
       else
         voters.push({voter:candidate, votes: []})
       
-      voters.push(i);
       // log(candidates[indexArray].accuracy);
     }
+
+    console.log("Candidate scores are selected..")
 
     let candidateScores = Array(candidates.length).fill(0);
     for (let i = 0; i < voters.length; i++) {
@@ -57,6 +60,7 @@ contract("Election", function(accounts) {
       
     }
 
+    console.log("Selecting highest scores..")
     //get highest scores 
     let highest1 = 0;
     let highest2 = 0;
@@ -64,18 +68,36 @@ contract("Election", function(accounts) {
 
     for (let i = 0; i < candidates.length; i++) {
 
-      if (candidates[i] > candidates[highest1]) {
+      if (candidates[i] > candidateScores[highest1]) {
         highest3 = highest2;
         highest2 = highest1;
         highest1 = i;
-      } else if (candidates[i] > candidates[highest2]) {
+      } else if (candidates[i] > candidateScores[highest2]) {
         highest3 = highest2;
         highest2 = i;
-      } else if (candidates[i] > candidates[highest3]) {
+      } else if (candidates[i] > candidateScores[highest3]) {
         highest3 = i;
       }
     }
-    let globalAccuracyAfterAveraging = (candidates[highest1] + candidates[highest2] + candidates[highest3]) / 3;
+    console.log("1. Candidate" + highest1 + ", accuracy : " + candidates[highest1].accuracy);
+    console.log("2. Candidate" + highest2 + ", accuracy : " + candidates[highest2].accuracy);
+    console.log("3. Candidate" + highest3 + ", accuracy : " + candidates[highest3].accuracy);
+    let globalAccuracyAfterAveraging = (candidates[highest1].accuracy + candidates[highest2].accuracy + candidates[highest3].accuracy) / 3;
+   
+    console.log("Check voters who vote on lower scores and trainers with low accuracy..");
+    let punishList = [];
+    for (let i = 0; i < candidates.length; i++) {
+      if(candidates[i].accuracy < candidates[highest3].accuracy) {
+        punishList.push(i);
+        for (let j = 0; j < voters.length; j++) {
+          if(voters[j].votes.includes(i) && !punishList.includes(j)){
+            punishList.push(j);
+          }
+        }
+      }
+    }
+    console.log("List of candidates and voters with low scores:",punishList);
+
     console.log("New global accuracy: ",globalAccuracyAfterAveraging);
 
     //aggregator submits the new averaged model to blockchain
