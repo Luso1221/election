@@ -21,15 +21,26 @@ const initialize = async function() {
   let voterAccounts = [
     true,true,true,true,true,true,true,true,true,true,
     false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,false,false,false,false,false,false
-  ];
-  let maliciousAccounts = [
-    true,true,true,false,false,false,false,false,false,false,
+    false,false,false,false,false,false,false,false,false,false,
     false,false,false,false,false,false,false,false,false,false,
     true,true,true,true,true,true,true,true,true,true
   ];
+  let maliciousAccounts = [
+    true,true,true,true,true,true,true,true,true,true, //voter
+    false,false,false,false,false,false,false,false,false,false, //trainer
+    true,true,true,true,true,false,false,false,false, //trainer
+    false,false,false,false,false,false,false,false,false,false, //trainer
+    false,false,false,false,false,false,false,false,false,false //voter
+  ];
   for (let index = 0; index < accounts.length; index++) {
-    await SC.addCandidate.sendTransaction("Candidate "+index,accounts[index],maliciousAccounts[index],voterAccounts[index], {from: accounts[0]});
+    let rng = 50;
+    // if(maliciousAccounts[index] && voterAccounts[index]){
+    //   rng = 60;
+    // } else {
+    //   rng = 40;
+      // rng = Math.ceil(Math.random() * 50 + 40);
+    // }
+    await SC.addCandidate.sendTransaction("Candidate "+index,accounts[index],rng,maliciousAccounts[index],voterAccounts[index], {from: accounts[0]});
   }
   let candidatesCount = await SC.candidatesCount();
 
@@ -120,7 +131,8 @@ app.get('/test', async(req,res)=>{
 // POST method route
 app.post('/candidate', async (req, res) => {
   console.log("Adding candidate")
-  let err = await SC.addCandidate.sendTransaction("Candidate 3","0x07E4bE8e931Ea6c7D694350552e127182a32f211", {from: "0x07E4bE8e931Ea6c7D694350552e127182a32f211",
+  let startReputation = Math.random() * 50 + 40;
+  let err = await SC.addCandidate.sendTransaction("Candidate 3","0x07E4bE8e931Ea6c7D694350552e127182a32f211", startReputation, {from: "0x07E4bE8e931Ea6c7D694350552e127182a32f211",
   gas: 3000000 });
     console.log("Candidate added")
   res.send(err);

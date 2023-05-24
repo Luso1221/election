@@ -7,6 +7,11 @@ exports.doTraining = async function (SC, account) {
     let reputations = [];
     let candidateAccounts = [];
     let accuracyList = [];
+    let gweiList = [];
+    let totalVoters = 5;
+    let totalMaliciousVoters = 5;
+    let totalTrainers = 30;
+    let totalMaliciousTrainers = 10;
     // let number_of_trainers_selected = 3;
 
     await SC.calculateReputation.sendTransaction({ from: account });
@@ -47,6 +52,7 @@ exports.doTraining = async function (SC, account) {
 
         }
         accuracyList.push(accuracy);
+        gweiList.push(candidate.totalGwei);
         //   console.log(candidates[i-1]);
 
         // log(candidates[indexArray].accuracy);
@@ -58,7 +64,7 @@ exports.doTraining = async function (SC, account) {
     for (let i = 0; i < candidatesCount; i++) {
         candidateScores.push(0);
     }
-    
+
     console.log("Selecting highest scores..")
     //get highest scores 
     let threeHighestAccuracy = getThreeHighest(accuracyList);
@@ -70,11 +76,11 @@ exports.doTraining = async function (SC, account) {
                         voters[i].votes.push(j);
                         candidateScores[j] = candidateScores[j] + voters[i].reputation.toNumber();
                     }
-                    else if (!maliciousAccounts[i] && !maliciousAccounts[j]  && threeHighestAccuracy.includes(j)) {
+                    else if (!maliciousAccounts[i] && !maliciousAccounts[j] && threeHighestAccuracy.includes(j)) {
                         voters[i].votes.push(j);
                         candidateScores[j] = candidateScores[j] + voters[i].reputation.toNumber();
                     }
-                } 
+                }
             }
         }
 
@@ -87,7 +93,7 @@ exports.doTraining = async function (SC, account) {
     console.log("2. Candidate " + threeHighestScores[1] + ", accuracy : " + candidates[threeHighestScores[1]].accuracy);
     console.log("3. Candidate " + threeHighestScores[2] + ", accuracy : " + candidates[threeHighestScores[2]].accuracy);
     globalAccuracy = (candidates[threeHighestScores[0]].accuracy + candidates[threeHighestScores[1]].accuracy + candidates[threeHighestScores[2]].accuracy) / 3;
-    console.log("Global accuracy averaged: ",globalAccuracy)
+    console.log("Global accuracy averaged: ", globalAccuracy)
 
     console.log("Check voters who vote on lower scores and trainers with low accuracy..");
     let punishList = [];
@@ -114,10 +120,18 @@ exports.doTraining = async function (SC, account) {
                 if (punishList.includes(i)) {
                     console.log(candidates[i])
                     await SC.setReputation.sendTransaction(candidates[i].candidate.addr, candidates[i].reputation.toNumber() - 10, { from: account });
+
+                    reputations[i] = reputations[i] - 10
                 } else {
                     console.log(candidates[i])
                     await SC.setReputation.sendTransaction(candidates[i].candidate.addr, candidates[i].reputation.toNumber() + 10, { from: account });
+
+                    reputations[i] = reputations[i] + 10
                 }
+                let newGwei = Math.round(parseInt(gweiList[i]) + parseInt(gweiList[i] * reputations[i] / 1000));
+                console.log(newGwei)
+                gweiList[i] = newGwei;
+                await SC.setGwei.sendTransaction(candidates[i].candidate.addr, newGwei, { from: account });
             }
         }
 
@@ -128,19 +142,51 @@ exports.doTraining = async function (SC, account) {
         if (!bannedAccounts[i] && voterAccounts[i]) {
             if (punishList.includes(i)) {
                 await SC.setReputation.sendTransaction(voters[i].voter.addr, voters[i].reputation.toNumber() - 10, { from: account });
+
+                reputations[i] = reputations[i] - 10
             } else {
                 await SC.setReputation.sendTransaction(voters[i].voter.addr, voters[i].reputation.toNumber() + 10, { from: account });
+
+                reputations[i] = reputations[i] + 10
             }
+
+            let newGwei = Math.round(parseInt(gweiList[i]) + parseInt(gweiList[i] * reputations[i] / 1000));
+            console.log(newGwei)
+            gweiList[i] = newGwei;
+            await SC.setGwei.sendTransaction(voters[i].voter.addr, newGwei, { from: account });
         }
 
     }
     console.log("Setting new accuracy..");
     await SC.setGlobalAccuracy.sendTransaction(globalAccuracy.toFixed(0), { from: account });
     console.log("Finish iteration, returning values");
-    return { candidatesCount, candidates, voters, candidateScores, punishList, bannedAccounts, maliciousAccounts, voterAccounts, threeHighestAccuracy, threeHighestScores, reputations, globalAccuracy };
+
+    let averageReputation = { mv: 0, nmv: 0, mt: 0, nmt: 0 };
+    let averageGwei = { mv: 0, nmv: 0, mt: 0, nmt: 0 };
+    for (let i = 0; i < reputations.length; i++) {
+        if (maliciousAccounts[i] && voterAccounts[i]) {
+
+            averageReputation.mv += reputations[i] / totalMaliciousVoters;
+            averageGwei.mv += gweiList[i] / totalMaliciousVoters;
+        } else if (maliciousAccounts[i]) {
+            averageReputation.mt += reputations[i] / totalMaliciousTrainers;
+            averageGwei.mt += gweiList[i] / totalMaliciousTrainers;
+        } else if (voterAccounts[i]) {
+
+            averageReputation.nmv += reputations[i] / totalVoters;
+            averageGwei.nmv += gweiList[i] / totalVoters;
+
+        } else if (!maliciousAccounts[i] && !voterAccounts[i]) {
+
+            averageReputation.nmt += reputations[i] / totalTrainers;
+            averageGwei.nmt += gweiList[i] / totalTrainers;
+        }
+
+    }
+    return { candidatesCount, candidates, voters, candidateScores, punishList, bannedAccounts, maliciousAccounts, voterAccounts, threeHighestAccuracy, threeHighestScores, reputations, averageReputation, averageGwei, globalAccuracy, gweiList };
 }
 
-function getThreeHighest(intArr){
+function getThreeHighest(intArr) {
 
     let highest1 = -1;
     let highest2 = -1;
@@ -159,5 +205,5 @@ function getThreeHighest(intArr){
             highest3 = i;
         }
     }
-    return [highest1,highest2,highest3];
+    return [highest1, highest2, highest3];
 }

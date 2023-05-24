@@ -1,221 +1,671 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <title>Chart.js example</title>
-  </head>
-  <body>
-    <!-- <div style="width: 500px;"><canvas id="dimensions"></canvas></div><br/> -->
-    <!-- <div style="width:240px;height:240px"> -->
 
-    <canvas id="myChart"></canvas>
+<head>
+  <title>Chart.js example</title>
+  <style>
+    .chart-legend {
+      font-family: 'Palatino Linotype';
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .chart-legend-item {
+      font-family: 'Palatino Linotype';
+      display: inline-block;
+      margin-right: 10px;
+      margin-bottom: 5px;
+      font-size: 36px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .chart-legend-item span {
+      display: inline-block;
+      width: 36px;
+      height: 36px;
+      margin-right: 5px;
+    }
+  </style>
+</head>
+
+<body>
+  <button onclick="localStorage.removeItem('cache');location.reload();">Clear cache and refresh</button>
+  <!-- <div style="width: 500px;"><canvas id="dimensions"></canvas></div><br/> -->
+  <!-- <div style="width:240px;height:240px"> -->
+
+  <!-- <div id="divVoters">
+    <canvas id="myChartVotersReputation"></canvas>
+  </div>
+  <button onclick="capture('divVoters')">Save chart</button>
+
+  <div>
+    
+  <canvas id="testPattern"></canvas>
+  </div>
+  <div id="divTrainers">
+    <canvas id="myChartTrainersReputation"></canvas>
+  </div>
+  <button onclick="capture('divTrainers')">Save chart</button> -->
+  <!-- <div style="width:240px;height:240px; margin-top:500px">
+
+      <canvas id="myChart2"></canvas>
     </div>
-    <!-- <div style="width:240px;height:240px; margin-top:500px"> -->
-    <canvas id="myChart2"></canvas>
-    <canvas id="myChartBanned"></canvas>
-    <canvas id="myChartAccuracy"></canvas>
-    <!-- </div> -->
-    <!-- <script type="module" src="dimensions.js"></script> -->
-  </body>
-  <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-  <script src="js/chart.js/dist/Chart.js"></script>
-  <script>
+    <div style="width:240px;height:240px; margin-top:500px">
+
+      <canvas id="myChart"></canvas>
+    </div> -->
+  <!-- <div style="width:240px;height:240px; margin-top:500px"> -->
+  <!-- <canvas id="myChart2"></canvas>
+  <canvas id="myChartBanned"></canvas>
+  <canvas id="myChartAccuracy"></canvas>
+
+  <div id="divReward1">
+    <canvas id="myChartRewardTrainers"></canvas>
+  </div>
+  <button onclick="capture('divReward1')">Save chart</button>
+  <div id="divReward2">
+    <canvas id="myChartRewardVoters"></canvas>
+  </div>
+  <button onclick="capture('divReward2')">Save chart</button> -->
+  <div id="divAverageRep">
+    <canvas id="myChartAvgRep"></canvas>
+  </div>
+  <button onclick="capture('divAverageRep','voter_reputation')">Save chart</button>
+  <div id="divAverageRep2" >
+    <canvas id="myChartAvgRep2"></canvas>
+  </div>
+  <button onclick="capture('divAverageRep2','trainer_reputation')">Save chart</button>
   
-$(function(){
-  let cache = localStorage.getItem("cache");
-  if (cache == null) {
+  <div id="divAvgGwei">
+    <canvas id="myChartAvgGwei"></canvas>
+  </div>
+  <button onclick="capture('divAvgGwei','voter_reward')">Save chart</button>
+  
+  <div id="divAvgGwei2">
+    <canvas id="myChartAvgGwei2"></canvas>
+  </div>
+  <button onclick="capture('divAvgGwei2','trainer_reputation')">Save chart</button>
+  <!-- </div> -->
+  <!-- <script type="module" src="dimensions.js"></script> -->
+</body>
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="js/chart.js/dist/Chart.js"></script>
+<script src="js/html2canvas.js"></script>
+<script src="js/patternomaly/dist/patternomaly.js"></script>
+<script>
 
-    $.getJSON("http://localhost:8080/test",function( data ) {
-      let trainingResults = data.trainingResults;
-      console.log(trainingResults);
-      localStorage.setItem("cache",JSON.stringify(trainingResults))
-    createCharts(trainingResults);
-    });
-  } else {
-    createCharts(JSON.parse(cache));
-  } 
-});
-function createCharts(trainingResults){
-  console.log(trainingResults);
-  createChart(trainingResults);
-  createChart2(trainingResults);
-  createBannedChart(trainingResults);
-  createAccuracyChart(trainingResults);
+  $(function () {
+    // Chart.defaults.global.defaultFontFamily = "Georgia";
+    // Create a canvas element
+    let cache = localStorage.getItem("cache");
+    if (cache == null) {
 
-}
-function createChart(trainingResults){
-  let labels = [];
-  let datasets = [];
-  let colors = ['blue','red','green','yellow','purple','black','cyan','brown','gray'];
+      $.getJSON("http://localhost:8080/test", function (data) {
+        let trainingResults = data.trainingResults;
+        console.log(trainingResults);
+        localStorage.setItem("cache", JSON.stringify(trainingResults))
+        createCharts(trainingResults);
+      });
+    } else {
+      createCharts(JSON.parse(cache));
+    }
+  });
+  function createCharts(trainingResults) {
+    console.log(trainingResults);
+    // createChart(trainingResults);
+    // createChart2(trainingResults);
+    // createBannedChart(trainingResults);
+    // createAccuracyChart(trainingResults);
+    // createRewardChart(trainingResults);
+    createAverageChart(trainingResults);
+
+  }
+  function createChart(trainingResults) {
+    let labels = [];
+    let datasets = [];
+    let colors = ['blue', 'red', 'green', 'yellow', 'purple', 'black', 'cyan', 'brown', 'gray'];
+    
     let candidatesCount = trainingResults[0].candidatesCount;
     for (let i = 0; i < candidatesCount; i++) {
       let color = 'black';
-      if (trainingResults[0].maliciousAccounts[i] & trainingResults[0].voterAccounts[i]) color = 'purple' 
-      else if (trainingResults[0].maliciousAccounts[i]) color = 'red' 
-      else if (trainingResults[0].voterAccounts[i]) color = 'blue' 
+      let symbol = 'cross';
+      if (trainingResults[0].maliciousAccounts[i] & trainingResults[0].voterAccounts[i]) {
+        color = 'purple';
+        symbol = 'square';
+      }
+      else if (trainingResults[0].maliciousAccounts[i]) {
+        color = 'red'
+        symbol = 'circle';
+      }
+      else if (trainingResults[0].voterAccounts[i]) {
+        color = 'blue'; 
+        symbol = 'zigzag';
+      }
       datasets.push({
-          label: (i+1).toString(),
-          backgroundColor: color,
-          data: []
-        });
-      
+        label: (i + 1).toString(),
+        backgroundColor: pattern.draw(symbol, color),
+
+        data: []
+      });
+
     }
-  
+
     for (let i = 0; i < trainingResults.length; i++) {
-      labels.push("Iteration "+(i+1))
+      labels.push((i + 1))
       for (let j = 0; j < candidatesCount; j++) {
         datasets[j].data.push(trainingResults[i].reputations[j]);
       }
     }
-    var ctx = document.getElementById('myChart').getContext('2d');
-    var myChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-          datasets:datasets
-        },
-        options: {
-          scales: {
-              yAxes: [{
-                  ticks: {
-                      beginAtZero: true
-                  }
-              }]
-          },
-          legendCallback: function(chart) {
-            console.log(chart);
-              // Return the HTML string here.
-          }
-        }
-        
-    });
-}
-  
-function createChart2(trainingResults){
-  let labels = [];
-  let datasets = [];
-  let colors = ['blue','red','green','yellow','purple','black','cyan','brown','gray'];
-  let candidatesCount = trainingResults[0].candidatesCount;
-  for (let i = 0; i < candidatesCount; i++) {
-    let color = 'black';
-    if (trainingResults[0].maliciousAccounts[i] & trainingResults[0].voterAccounts[i]) color = 'purple' 
-    else if (trainingResults[0].maliciousAccounts[i]) color = 'red' 
-    else if (trainingResults[0].voterAccounts[i]) color = 'blue' 
-    datasets.push({
-        label: (i+1).toString(),
+
+    let voters = [];
+    let trainers = [];
+    for (let i = 0; i < candidatesCount; i++) {
+      if (trainingResults[0].voterAccounts[i])
+        voters.push(datasets[i]);
+      else
+        trainers.push(datasets[i]);
+
+    }
+    // var ctx = document.getElementById('myChart').getContext('2d');
+
+
+    var labelVoter = { 'purple': { 'title' : 'Malicious Voter', 'symbol' : 'square'}, 'blue': {'title' : 'Non-Malicious Voter', 'symbol' : 'zigzag'} }
+    var labelTrainer = { 'red': {'title': 'Malicious Trainers', 'symbol' : 'circle'}, 'black': {'title' :'Non-Malicious Trainers', 'symbol' :'cross' }}
+    generateChart('myChartVotersReputation', 'bar', labels, voters, labelVoter, "Voter Reputation");
+    generateChart('myChartTrainersReputation', 'bar', labels, trainers, labelTrainer, "Trainer Reputation");
+  }
+
+  function createChart2(trainingResults) {
+    let labels = [];
+    let datasets = [];
+    let colors = ['blue', 'red', 'green', 'yellow', 'purple', 'black', 'cyan', 'brown', 'gray'];
+    let candidatesCount = trainingResults[0].candidatesCount;
+    for (let i = 0; i < candidatesCount; i++) {
+      
+      let color = '';
+      if (trainingResults[0].maliciousAccounts[i]) color = 'red'
+      else color = 'black';
+      if (trainingResults[0].maliciousAccounts[i] & trainingResults[0].voterAccounts[i]) color = 'purple'
+      else if (trainingResults[0].voterAccounts[i]) color = 'blue'
+      datasets.push({
+        label: (i + 1).toString(),
         backgroundColor: color,
         data: []
       });
-    
-  }
 
-  for (let i = 0; i < trainingResults.length; i++) {
-    labels.push("Iteration "+(i+1))
-    for (let j = 0; j < candidatesCount; j++) {
-      datasets[j].data.push(trainingResults[i].candidates[j].accuracy);
     }
-  }
-  var ctx = document.getElementById('myChart2').getContext('2d');
-  var myChart = new Chart(ctx, {
+
+    for (let i = 0; i < trainingResults.length; i++) {
+      labels.push("Iteration " + (i + 1))
+      for (let j = 0; j < candidatesCount; j++) {
+        datasets[j].data.push(trainingResults[i].candidates[j].accuracy);
+      }
+    }
+
+    var ctx = document.getElementById('myChart2').getContext('2d');
+    var myChart = new Chart(ctx, {
       type: 'bar',
       data: {
-          labels: labels,
-        datasets:datasets
+        labels: labels,
+        datasets: datasets
       },
       options: {
         scales: {
-            yAxes: [{
-                ticks: {
-                    beginAtZero: true
-                }
-            }]
+          yAxes: [{
+            ticks: {
+              beginAtZero: true, fontSize: 40
+            }
+          }],
+
+          xAxes: [{
+            ticks: {
+              beginAtZero: true, fontSize: 40
+            }
+          }]
         },
-        legendCallback: function(chart) {
-            // Return the HTML string here.
+        legendCallback: function (chart) {
+          // Return the HTML string here.
         }
       }
-      
-  });
-}
-  
-  
-function createBannedChart(trainingResults){
-  let labels = [];
-  let datasets = [];
+
+    });
+  }
+
+
+  function createBannedChart(trainingResults) {
+    let labels = [];
+    let datasets = [];
     let candidatesCount = trainingResults[0].candidatesCount;
     for (let i = 0; i < candidatesCount; i++) {
       let color = 'black';
-      if (trainingResults[0].maliciousAccounts[i] & trainingResults[0].voterAccounts[i]) color = 'purple' 
-      else if (trainingResults[0].maliciousAccounts[i]) color = 'red' 
-      else if (trainingResults[0].voterAccounts[i]) color = 'blue' 
+      if (trainingResults[0].maliciousAccounts[i] & trainingResults[0].voterAccounts[i]) color = 'purple'
+      else if (trainingResults[0].maliciousAccounts[i]) color = 'red'
+      else if (trainingResults[0].voterAccounts[i]) color = 'blue'
       datasets.push({
-          label: (i+1).toString(),
-          backgroundColor: color,
-          data: []
-        });
-      
+        label: (i + 1).toString(),
+        backgroundColor: color,
+        data: []
+      });
+
     }
-  
+
     for (let i = 0; i < trainingResults.length; i++) {
-      labels.push("Iteration "+(i+1))
+      labels.push("Iteration " + (i + 1))
       for (let j = 0; j < candidatesCount; j++) {
-        if(trainingResults[i].bannedAccounts[j])
-        datasets[j].data.push(1);
+        if (trainingResults[i].bannedAccounts[j])
+          datasets[j].data.push(1);
         else
-        datasets[j].data.push(0);
+          datasets[j].data.push(0);
       }
     }
     var ctx = document.getElementById('myChartBanned').getContext('2d');
     var myChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-          datasets:datasets
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: datasets
+      },
+      options: {
+        scales: {
+          yAxes: [{
+            ticks: {
+              beginAtZero: true, fontSize: 40
+            }
+          }],
+
+          xAxes: [{
+            ticks: {
+              beginAtZero: true, fontSize: 40
+            }
+          }]
         },
-        options: {
-          scales: {
-              yAxes: [{
-                  ticks: {
-                      beginAtZero: true
-                  }
-              }]
-          },
-          legendCallback: function(chart) {
-              // Return the HTML string here.
-          }
+        legendCallback: function (chart) {
+          // Return the HTML string here.
         }
-        
+      }
+
     });
-}
-  
-function createAccuracyChart(trainingResults){
-  let labels = [];
-  let datasets = [];
-  let accuracyList = [];
-  
-  for (let i = 0; i < trainingResults.length; i++) {
-    labels.push("Iteration "+(i+1))
-    accuracyList.push(trainingResults[i].globalAccuracy/100)
   }
-  datasets.push({
-    label: "Global Accuracy",
-    backgroundColor: 'black',
-    data: accuracyList,
-    fill:false
-  });
-  var ctx = document.getElementById('myChartAccuracy').getContext('2d');
-  var myChart = new Chart(ctx, {
+
+  function createAccuracyChart(trainingResults) {
+    let labels = [];
+    let datasets = [];
+    let accuracyList = [];
+
+    for (let i = 0; i < trainingResults.length; i++) {
+      labels.push("Iteration " + (i + 1))
+      accuracyList.push(trainingResults[i].globalAccuracy / 100)
+    }
+    datasets.push({
+      label: "Global Accuracy",
+      backgroundColor: 'black',
+      data: accuracyList,
+      fill: false
+    });
+    var ctx = document.getElementById('myChartAccuracy').getContext('2d');
+    var myChart = new Chart(ctx, {
       type: 'line',
-      
+
       data: {
         labels: labels,
         datasets: datasets
       },
       options: {}
-      
-  });
-}
 
-  </script>
+    });
+  }
+
+  function createRewardChart(trainingResults) {
+    let labels = [];
+    let datasets = [];
+    let colors = ['blue', 'red', 'green', 'yellow', 'purple', 'black', 'cyan', 'brown', 'gray'];
+    let candidatesCount = trainingResults[0].candidatesCount;
+    for (let i = 0; i < candidatesCount; i++) {
+      let color = 'black';
+      let symbol = 'cross';
+      if (trainingResults[0].maliciousAccounts[i] & trainingResults[0].voterAccounts[i]) {
+        color = 'purple';
+        symbol = 'square';
+      }
+      else if (trainingResults[0].maliciousAccounts[i]) {
+        color = 'red'
+        symbol = 'circle';
+      }
+      else if (trainingResults[0].voterAccounts[i]) {
+        color = 'blue'; 
+        symbol = 'zigzag';
+      }
+      datasets.push({
+        label: (i + 1).toString(),
+        backgroundColor: pattern.draw(symbol, color),
+
+        data: []
+      });
+
+    }
+
+    for (let i = 0; i < trainingResults.length; i++) {
+      labels.push((i + 1))
+      for (let j = 0; j < candidatesCount; j++) {
+        datasets[j].data.push(parseInt(trainingResults[i].gweiList[j]) / 1000000);
+      }
+    }
+    let voters = [];
+    let trainers = [];
+    for (let i = 0; i < candidatesCount; i++) {
+      if (trainingResults[0].voterAccounts[i])
+        voters.push(datasets[i]);
+      else
+        trainers.push(datasets[i]);
+
+    }
+
+    var labelVoter = { 'purple': { 'title' : 'Malicious Voter', 'symbol' : 'square'}, 'blue': {'title' : 'Non-Malicious Voter', 'symbol' : 'zigzag'} }
+    var labelTrainer = { 'red': {'title': 'Malicious Trainers', 'symbol' : 'circle'}, 'black': {'title' :'Non-Malicious Trainers', 'symbol' :'cross' }}
+    generateChart('myChartRewardTrainers', 'bar', labels, trainers, labelTrainer, "TTL Gwei for Trainers (in mil.)");
+    generateChart('myChartRewardVoters', 'bar', labels, voters, labelVoter, "TTL Gwei for Voters (in mil.)");
+  }
+
+  function createAverageChart(trainingResults) {
+    let labels = [];
+    let datasets = [];
+    
+    // let candidatesCount = trainingResults[0].candidatesCount;
+    // for (let i = 0; i < candidatesCount; i++) {
+    //   let color = 'black';
+    //   let symbol = 'cross';
+    //   if (trainingResults[0].maliciousAccounts[i] & trainingResults[0].voterAccounts[i]) {
+    //     color = 'purple';
+    //     symbol = 'square';
+    //   }
+    //   else if (trainingResults[0].maliciousAccounts[i]) {
+    //     color = 'red'
+    //     symbol = 'circle';
+    //   }
+    //   else if (trainingResults[0].voterAccounts[i]) {
+    //     color = 'blue'; 
+    //     symbol = 'zigzag';
+    //   }
+    //   datasets.push({
+    //     label: (i + 1).toString(),
+    //     backgroundColor: pattern.draw(symbol, color),
+
+    //     data: []
+    //   });
+
+    // }
+    let mt = {
+      color :'red',
+      symbol :'circle',
+    };
+    let nmt = {
+      color :'black',
+      symbol :'cross',
+    };
+    let mv = {
+      color :'purple',
+      symbol : 'square',
+    };
+    let nmv = {
+      color : 'blue', 
+      symbol : 'zigzag',
+    };
+    
+    
+    let votersRep = [];
+    let trainersRep = [];
+
+    let votersGwei = [];
+    let trainersGwei = [];
+    
+    
+    trainersRep.push({
+      label: 'Malicious',
+      backgroundColor: pattern.draw(mt.symbol, mt.color),
+
+      data: []
+    });
+    trainersRep.push({
+      label: 'Non-Malicious',
+      backgroundColor: pattern.draw(nmt.symbol, nmt.color),
+
+      data: []
+    });
+    votersRep.push({
+      label: 'Malicious',
+      backgroundColor: pattern.draw(mv.symbol, mv.color),
+
+      data: []
+    });
+    votersRep.push({
+      label: 'Non-Malicious',
+      backgroundColor: pattern.draw(nmv.symbol, nmv.color),
+
+      data: []
+    });
+    votersGwei.push({
+      label: 'Malicious',
+      backgroundColor: pattern.draw(mv.symbol, mv.color),
+
+      data: []
+    });
+    votersGwei.push({
+      label: 'Non-Malicious',
+      backgroundColor: pattern.draw(nmv.symbol, nmv.color),
+
+      data: []
+    });
+    trainersGwei.push({
+      label: 'Malicious',
+      backgroundColor: pattern.draw(mt.symbol, mt.color),
+
+      data: []
+    });
+    trainersGwei.push({
+      label: 'Non-Malicious',
+      backgroundColor: pattern.draw(nmt.symbol, nmt.color),
+
+      data: []
+    });
+
+    
+    for (let i = 0; i < trainingResults.length; i++) {
+      labels.push((i + 1));
+      
+
+      
+      // trainersGwei.push({
+      //   label: (i + 1).toString(),
+      //   backgroundColor: pattern.draw(mt.symbol, mt.color),
+
+      //   data: []
+      // });
+      // trainersGwei.push({
+      //   label: (i + 1).toString(),
+      //   backgroundColor: pattern.draw(nmt.symbol, nmt.color),
+
+      //   data: []
+      // });
+      
+      // votersRep.push({
+      //   label: (i + 1).toString(),
+      //   backgroundColor: pattern.draw(mv.symbol, mv.color),
+
+      //   data: []
+      // });
+
+      // votersRep.push({
+      //   label: (i + 1).toString(),
+      //   backgroundColor: pattern.draw(nmv.symbol, nmv.color),
+
+      //   data: []
+      // });
+      // votersGwei.push({
+      //   label: (i + 1).toString(),
+      //   backgroundColor: pattern.draw(mv.symbol, mv.color),
+
+      //   data: []
+      // });
+      // votersGwei.push({
+      //   label: (i + 1).toString(),
+      //   backgroundColor: pattern.draw(nmv.symbol, nmv.color),
+
+      //   data: []
+      // });
+    }
+
+    for (let i = 0; i < trainingResults.length; i++) {
+      
+      trainersRep[0].data.push(trainingResults[i].averageReputation.mt);
+      trainersRep[1].data.push(trainingResults[i].averageReputation.nmt);
+      votersRep[0].data.push(trainingResults[i].averageReputation.mv);
+      votersRep[1].data.push(trainingResults[i].averageReputation.nmv);
+      trainersGwei[0].data.push(trainingResults[i].averageGwei.mt/1000000);
+      trainersGwei[1].data.push(trainingResults[i].averageGwei.nmt/1000000);
+      votersGwei[0].data.push(trainingResults[i].averageGwei.mv/1000000);
+      votersGwei[1].data.push(trainingResults[i].averageGwei.nmv/1000000);
+      
+    }
+    console.log(votersGwei);
+
+    // var ctx = document.getElementById('myChart').getContext('2d');
+
+
+    var labelVoter = { 
+      'purple': { 'title' : 'Malicious Voter', 'symbol' : 'square'}, 
+      'blue': {'title' : 'Non-Malicious Voter', 'symbol' : 'zigzag'}
+    }
+    var labelTrainer = { 
+      'red': {'title': 'Malicious Trainers', 'symbol' : 'circle'}, 
+      'black': {'title' :'Non-Malicious Trainers', 'symbol' :'cross' }
+    }
+    generateChart('myChartAvgRep', 'bar', labels, votersRep, labelVoter, "Voter AVG Reputation");
+    generateChart('myChartAvgRep2', 'bar', labels, trainersRep, labelTrainer, "Trainer AVG Reputation");
+    generateChart('myChartAvgGwei', 'bar', labels, votersGwei, labelVoter, "TTL AVG Gwei for Voters (in mil.)");
+    generateChart('myChartAvgGwei2', 'bar', labels, trainersGwei, labelTrainer, "TTL AVG Gwei for Trainers (in mil.)");
+  }
+
+  function generateChart(elementId, type, labels, datasets, legendLabels, axisTitle) {
+    console.log(elementId);
+    var ctx = document.getElementById(elementId).getContext('2d');
+    var _chart = new Chart(ctx, {
+      type: type,
+      data: {
+        labels: labels,
+        datasets: datasets
+      },
+
+      options: {
+        legend: {
+          display: false,
+          labels: {
+            fontColor: 'rgb(255, 99, 132)'
+          }
+        },
+        layout: {
+          padding: {
+            top: 20
+          }
+        },
+        legendCallback: function (chart) {
+          var text = [];
+          var keys = Object.keys(legendLabels);
+          text.push('<ul>');
+          for (var i = 0; i < chart.data.datasets.length; i++) {
+            var text = [];
+            text.push('<div class="chart-legend">');
+            for (var i = 0; i < keys.length; i++) {
+              text.push('<div class="chart-legend-item">');
+              // text.push('<span style="background-color:' + keys[i] + '">&nbsp;&nbsp;&nbsp;&nbsp;</span>');
+              text.push("<span style=\"background-image: url('"+legendLabels[keys[i]].symbol+".png')\">&nbsp;&nbsp;&nbsp;&nbsp;</span>");
+              text.push(legendLabels[keys[i]].title);
+              text.push('</div>');
+            }
+            text.push('</div>');
+            return text.join('');
+          }
+          text.push('</ul>');
+          return text.join('');
+        },
+        scales: {
+          yAxes: [{
+            ticks: {
+              
+              beginAtZero: true,
+              fontSize: 40,
+              fontColor: 'black',
+              fontFamily: 'Palatino Linotype',
+              align:'center'
+            },
+            scaleLabel: {
+              display: true,
+              labelString: axisTitle,
+              fontSize: 40,
+              fontColor: 'black',
+              fontFamily: 'Palatino Linotype',
+              position: 'center',
+              
+            },
+            
+
+          }],
+
+          xAxes: [{
+            ticks: {
+              beginAtZero: true,
+              fontSize: 40,
+              fontColor: 'black',
+              fontFamily: 'Palatino Linotype',
+              align:'center'
+            },
+            scaleLabel: {
+              labelString: 'Iteration',
+              fontSize: 40,
+              fontColor: 'black',
+              fontFamily: 'Palatino Linotype',
+              align:'center'
+            }
+
+          }]
+        }
+      }
+
+
+    });
+
+
+    // Create a new div element for legend
+    const newElement = document.createElement('div');
+
+    // Set the innerHTML property of the new div element to the HTML string
+    newElement.innerHTML = _chart.generateLegend();
+
+    // Prepend the new div element to the parent element
+    document.getElementById(elementId).parentNode.insertBefore(newElement, document.getElementById(elementId));
+  }
+
+  function capture(elementId,filename) {
+    html2canvas(document.getElementById(elementId), { backgroundColor: null }).then(function (canvas) {
+      // Create a new image object with the canvas data URL
+      const image = new Image();
+      image.src = canvas.toDataURL();
+
+
+      // Create a temporary link element to download the image
+      const link = document.createElement('a');
+      link.download = filename+'.png';
+      link.href = image.src;
+
+      link.click();
+      // Create an input
+    });
+  }
+
+
+</script>
+
 </html>
- 

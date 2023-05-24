@@ -1,4 +1,4 @@
-pragma solidity >=0.8;
+pragma solidity >=0.5.1;
 
 contract Election {
     // Model a Candidate
@@ -18,6 +18,7 @@ contract Election {
         bool isMalicious;
         bool isVoter;
         bool isBanned;
+        int totalGwei;
     }
     
 
@@ -42,10 +43,10 @@ contract Election {
         // addCandidate("Candidate 2",0x81baA2622dD9629B3b4e8d3451259DA04d1b31C8);
     }
 
-    function addCandidate (string memory _name, address addr, bool isMalicious, bool isVoter) public {
+    function addCandidate (string memory _name, address addr, uint reputation, bool isMalicious, bool isVoter) public {
         candidatesCount ++;
         addressList.push(addr);
-        candidates[addr] = Candidate(candidatesCount, _name, STARTING_VOTE_COUNT, addr, STARTING_REPUTATION, new uint[](10),0, new string[](10), new string[](10), isMalicious, isVoter, false);
+        candidates[addr] = Candidate(candidatesCount, _name, STARTING_VOTE_COUNT, addr, reputation, new uint[](10),0, new string[](10), new string[](10), isMalicious, isVoter, false, 5000000);
     }
 
     function deleteCandidate (uint id) public{
@@ -76,6 +77,11 @@ contract Election {
         Candidate storage candidate  = candidates[addr];
         candidate.events.push(eventCode);
     } 
+    function setGwei(address addr,int _gwei) public{
+        
+        Candidate storage candidate  = candidates[addr];
+        candidate.totalGwei = _gwei;
+    }
     function vote (uint _candidateIdTarget, address addr, uint _candidateIdVoter) public {
         // require that they haven't voted before
         require(!voters[msg.sender]);
