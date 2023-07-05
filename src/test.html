@@ -28,11 +28,15 @@
       height: 36px;
       margin-right: 5px;
     }
+    .anychart-credits {
+      display: none;
+    }
   </style>
 </head>
 
 <body>
-  <button onclick="localStorage.removeItem('cache');location.reload();">Clear cache and refresh</button>
+  <button onclick="localStorage.removeItem('cache');location.href = location.origin+'/test.html?choice=1';">Clear cache and refresh</button>
+  <button onclick="localStorage.removeItem('cache');location.href = location.origin+'/test.html?choice=2';">Clear cache and refresh (set number of trainers = voters)</button>
   <!-- <div style="width: 500px;"><canvas id="dimensions"></canvas></div><br/> -->
   <!-- <div style="width:240px;height:240px"> -->
 
@@ -88,23 +92,44 @@
     <canvas id="myChartAvgGwei2"></canvas>
   </div>
   <button onclick="capture('divAvgGwei2','trainer_reputation')">Save chart</button>
+  <div id="divAvgTime">
+    <canvas id="myChartAvgTime"></canvas>
+  </div>
+  <button onclick="capture('divAvgTime','performance_time')">Save chart</button>
+  <div id="myTable"></div>
+  <div id="container"></div>
+  <button onclick="capture('container','training_score')">Save chart</button>
+  <div id="container2"></div>
+  <button onclick="capture('divAvgTime','performance_time')">Save chart</button>
+  <button onclick="localStorage.removeItem('cache2');location.href = location.origin+'/test.html'">Clear cache and refresh</button>
   <!-- </div> -->
   <!-- <script type="module" src="dimensions.js"></script> -->
 </body>
 <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script src="js/chart.js/dist/Chart.js"></script>
+<!-- <script src="https://cdn.anychart.com/releases/8.8.0/js/anychart-base.min.js"></script> -->
+<script src="https://cdn.anychart.com/releases/v8/js/anychart-base.min.js" type="text/javascript"></script>
+<script src="https://cdn.anychart.com/releases/8.11.1/js/anychart-exports.min.js"></script>
+
+
+<!-- <script src="https://cdn.anychart.com/releases/8.8.0/js/anychart-base.min.js"></script> -->
 <script src="js/html2canvas.js"></script>
 <script src="js/patternomaly/dist/patternomaly.js"></script>
 <script>
 
   $(function () {
+    anychart.exports.server("http://localhost:2000");
+    anychart.exports.filename('custom_name');
+
     // Chart.defaults.global.defaultFontFamily = "Georgia";
     // Create a canvas element
     let cache = localStorage.getItem("cache");
     if (cache == null) {
-
-      $.getJSON("http://localhost:8080/test", function (data) {
+      let url = new URL(window.location.href);
+      let params = new URLSearchParams(url.search);
+      let choice = params.get("choice");
+      $.getJSON("http://localhost:8080/test?choice="+choice, function (data) {
         let trainingResults = data.trainingResults;
         console.log(trainingResults);
         localStorage.setItem("cache", JSON.stringify(trainingResults))
@@ -122,7 +147,91 @@
     // createAccuracyChart(trainingResults);
     // createRewardChart(trainingResults);
     createAverageChart(trainingResults);
+    createTimeChart(trainingResults);
+    // createTable();
+    createBoxplot();
 
+
+  }
+  function createBoxplot(){
+    let cache = localStorage.getItem("cache2");
+    if (cache == null) {
+      $.getJSON("http://localhost:8080/result", function (data) {
+        localStorage.setItem("cache2", JSON.stringify(data))
+        
+        cache = localStorage.getItem("cache2");
+        let val = JSON.parse(cache);
+        console.log(val);
+        createAnychartBox(val);
+      });
+    } else {
+      cache = localStorage.getItem("cache2");
+      let val = JSON.parse(cache);
+      console.log(val);
+      createAnychartBox(val);
+    }
+
+  }
+  function createAnychartBox(val){
+      var data = [];
+      for (let i = 0; i < 10; i++) {
+        const candidate = val[3].candidates[i];
+        data.push({x: (i+1), q1:candidate.workerQ1, median: candidate.workerQ2, q3: candidate.workerQ3, low: candidate.workerMin, high: candidate.workerMax, outliers: [candidate.cumScore]});
+        
+      }
+      var data2 = [];
+      for (let i = 0; i < 10; i++) {
+        const candidate = val[3].candidates[i];
+        data2.push({x: (i+1), q1:candidate.reviewerQ1, median: candidate.reviewerQ2, q3: candidate.reviewerQ3, low: candidate.reviewerMin, high: candidate.reviewerMax});
+        
+      }
+
+      console.log(val);
+      console.log(data);
+      console.log(data2);
+      // console.log(data2);
+      // create a chart
+      var ticksArray = [0,25,50,75,100];
+      chart = anychart.box();
+      // chart.yScale(anychart.scales.ordinal());
+
+      chart.yScale().ticks().set(ticksArray);
+      // create a box series and set the data
+      series = chart.box(data);
+    
+      // set the container id
+      chart.container("container");
+      // initiate drawing the chart
+      chart.draw();
+      chart.saveAsPng({"width": 360,
+          "height": 500,
+          "quality": 0.3,
+          "filename": "My Chart PNG"});
+      var ticksArray2 = [0,5,10,15,20];
+      chart2 = anychart.box();
+      // chart.yScale(anychart.scales.ordinal());
+
+      chart2.yScale().ticks().set(ticksArray2);
+      // create a box series and set the data
+      chart2.box(data2);
+    
+      // set the container id
+      chart2.container("container2");
+      // initiate drawing the chart
+      chart2.draw();
+  }
+  function createTable(){
+      let cache = localStorage.getItem("cache2");
+      if (cache == null) {
+        $.getJSON("http://localhost:8080/result", function (data) {
+            localStorage.setItem("cache2", JSON.stringify(data))
+          createTableFromArray(data[0],"myTable");
+        });
+      } else {
+        let val = JSON.parse(cache);
+        console.log(val);
+        createTableFromArray(val[0].candidates, "myTable");
+      }
   }
   function createChart(trainingResults) {
     let labels = [];
@@ -134,7 +243,7 @@
       let color = 'black';
       let symbol = 'cross';
       if (trainingResults[0].maliciousAccounts[i] & trainingResults[0].voterAccounts[i]) {
-        color = 'purple';
+        color = 'green';
         symbol = 'square';
       }
       else if (trainingResults[0].maliciousAccounts[i]) {
@@ -407,12 +516,12 @@
       symbol :'cross',
     };
     let mv = {
-      color :'purple',
-      symbol : 'square',
+      color :'orange',
+      symbol : 'circle',
     };
     let nmv = {
-      color : 'blue', 
-      symbol : 'zigzag',
+      color : 'green', 
+      symbol : 'cross',
     };
     
     
@@ -474,7 +583,7 @@
 
     
     for (let i = 0; i < trainingResults.length; i++) {
-      labels.push((i + 1));
+      labels.push((i));
       
 
       
@@ -536,21 +645,76 @@
 
 
     var labelVoter = { 
-      'purple': { 'title' : 'Malicious Voter', 'symbol' : 'square'}, 
-      'blue': {'title' : 'Non-Malicious Voter', 'symbol' : 'zigzag'}
+      'orange': { 'title' : 'Malicious', 'symbol' : 'circle2'}, 
+      'green': {'title' : 'Non-Malicious', 'symbol' : 'cross2'}
     }
     var labelTrainer = { 
       'red': {'title': 'Malicious Trainers', 'symbol' : 'circle'}, 
       'black': {'title' :'Non-Malicious Trainers', 'symbol' :'cross' }
     }
-    generateChart('myChartAvgRep', 'bar', labels, votersRep, labelVoter, "Voter AVG Reputation");
+    generateChart('myChartAvgRep', 'bar', labels, votersRep, labelVoter, "Participant AVG Reputation");
     generateChart('myChartAvgRep2', 'bar', labels, trainersRep, labelTrainer, "Trainer AVG Reputation");
     generateChart('myChartAvgGwei', 'bar', labels, votersGwei, labelVoter, "TTL AVG Gwei for Voters (in mil.)");
     generateChart('myChartAvgGwei2', 'bar', labels, trainersGwei, labelTrainer, "TTL AVG Gwei for Trainers (in mil.)");
+   }
+
+   function createTimeChart(trainingResults) {
+    let labels = [];
+    let datasets = [];
+    
+    let trainingResults2 ;
+    $.getJSON('http://localhost:8080/data', function(obj) {
+      // console.log(obj);
+      trainingResults = obj.trainingResults;
+      trainingResults2 = obj.trainingResults2;
+
+      
+    datasets.push(
+      {
+        label: [],
+        backgroundColor: [],
+
+        data: []
+      }
+    );
+    datasets.push(
+        {
+          label: [],
+          backgroundColor: [],
+
+          data: []
+        }
+      );
+    for (let i = 0; i < trainingResults.length; i++) {
+      labels.push((i));
+      datasets[0].label.push((i));
+      datasets[0].backgroundColor.push('brown');
+      datasets[0].data.push(trainingResults[i].perfTime);
+      datasets[1].label.push((i));
+      datasets[1].backgroundColor.push('gray');
+      datasets[1].data.push(trainingResults2[i].perfTime);
+      
+    }
+
+
+    // var ctx = document.getElementById('myChart').getContext('2d');
+
+
+    var label = { 'brown': { 'title' : 'Proposed Scheme', 'symbol' : 'brown'}, 'gray': {'title' : 'Comparison Scheme', 'symbol' : 'gray'} }
+    generateChart('myChartAvgTime', 'bar', labels, datasets, label, "Execution Time");
+    });
+    // console.log(trainingResults);
+    // console.log(trainingResults2)
+    
+    // let votersRep = [];
+    // let trainersRep = [];
+
+    // let votersGwei = [];
+    // let trainersGwei = [];
+    
   }
 
   function generateChart(elementId, type, labels, datasets, legendLabels, axisTitle) {
-    console.log(elementId);
     var ctx = document.getElementById(elementId).getContext('2d');
     var _chart = new Chart(ctx, {
       type: type,
@@ -623,6 +787,7 @@
               align:'center'
             },
             scaleLabel: {
+              display: true,
               labelString: 'Iteration',
               fontSize: 40,
               fontColor: 'black',
@@ -630,7 +795,8 @@
               align:'center'
             }
 
-          }]
+          }],
+          
         }
       }
 
@@ -638,16 +804,76 @@
     });
 
 
-    // Create a new div element for legend
-    const newElement = document.createElement('div');
-
-    // Set the innerHTML property of the new div element to the HTML string
-    newElement.innerHTML = _chart.generateLegend();
-
-    // Prepend the new div element to the parent element
-    document.getElementById(elementId).parentNode.insertBefore(newElement, document.getElementById(elementId));
+    if (legendLabels != null) {
+      // Create a new div element for legend
+      const newElement = document.createElement('div');
+  
+      // Set the innerHTML property of the new div element to the HTML string
+      newElement.innerHTML = _chart.generateLegend();
+  
+      // Prepend the new div element to the parent element
+      document.getElementById(elementId).parentNode.insertBefore(newElement, document.getElementById(elementId));
+    }
   }
 
+  function createTableFromArray(arrItems,divID){
+
+    // the array.
+    // let arrItems = [
+    //   {ID: '001', 'Bird Name': "Black Vulture", Type : 'Hawk'},
+    //   {ID: '002', 'Bird Name': "Rock Pigeon", Type: 'Dove' },
+    //   {ID: '003', 'Bird Name': "Bell's Sparrow", Type: 'Sparrow' }
+    // ];
+
+
+    // Get values for the table header.
+    let col = [];
+    for (let i = 0; i < arrItems.length; i++) {
+      for (let key in arrItems[i]) {
+        if (col.indexOf(key) === -1) {
+          col.push(key);
+        }
+      }
+    }
+
+    // Create a Table.
+    let table = document.createElement("table");
+
+    // Create table header row.
+
+    let tr = table.insertRow(-1);		// table row.
+
+    for (let i = 0; i < col.length; i++) {
+      let th = document.createElement('th');  // table header.
+      th.innerHTML = col[i];
+      tr.appendChild(th);
+
+      th.setAttribute ('style', 
+          'font:18px Calibri;border: solid 1px #DDD;' +
+          'border-collapse: collapse; font-weight:bold;' +
+          'padding: 2px 3px; text-align: center;');
+    }
+
+    // Add JSON to the table as rows.
+    for (let z = 0; z < arrItems.length; z++) {
+      tr = table.insertRow(-1);
+
+      for (let j = 0; j < col.length; j++) {
+        let tabCell = tr.insertCell(-1);
+        tabCell.innerHTML = arrItems[z][col[j]];
+        tabCell.setAttribute  ('style', 
+          'font:18px Calibri;border: solid 1px #DDD;' +
+          'border-collapse: collapse; ' +
+          'padding: 2px 3px; text-align: center;');
+      }
+    }
+
+    // Show the table.
+    let container = document.getElementById(divID);
+    container.innerHTML = '';
+    container.appendChild(table);
+  
+  }
   function capture(elementId,filename) {
     html2canvas(document.getElementById(elementId), { backgroundColor: null }).then(function (canvas) {
       // Create a new image object with the canvas data URL

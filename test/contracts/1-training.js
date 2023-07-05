@@ -27,6 +27,7 @@ describe('When registering users', function () {
             let reputations = [];
             let candidateAccounts = [];
             let accuracyList = [];
+            let candidateScores = [];
             // let number_of_trainers_selected = 3;
             let account = accounts[0];
 
@@ -75,18 +76,48 @@ describe('When registering users', function () {
 
             console.log("Voting based on accuracy..")
 
-            let candidateScores = [];
             for (let i = 0; i < candidatesCount; i++) {
                 candidateScores.push(0);
+                await SC.submitVote.sendTransaction(account, account, 5, { from: account });
+            
             }
-
             console.log("Selecting highest accuracy..")
             //get highest scores 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
             let threeHighestAccuracy = getThreeHighest(accuracyList);
             for (let i = 0; i < voters.length; i++) {
                 if (!bannedAccounts[i] && voterAccounts[i]) {
                     for (let j = 0; j < candidates.length; j++) {
-                        if (!bannedAccounts[j] && !voterAccounts[j]) {
+                        if (!bannedAccounts[j] && candidateAccounts[j].candidate.isTrainer) {
                             if (maliciousAccounts[i] && maliciousAccounts[j]) {
                                 voters[i].votes.push(j);
                                 candidateScores[j] = candidateScores[j] + voters[i].reputation.toNumber();

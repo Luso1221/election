@@ -1,4 +1,4 @@
-pragma solidity >=0.5.1;
+pragma solidity >=0.8.1;
 
 contract Election {
     // Model a Candidate
@@ -17,10 +17,15 @@ contract Election {
         string[] ipfsAddresses;
         bool isMalicious;
         bool isVoter;
+        bool isTrainer;
         bool isBanned;
         int totalGwei;
     }
-    
+    struct Vote {
+        address voter;
+        uint value;
+    }
+    mapping(address => Vote[]) public votes;
 
     // Store accounts that have voted
     uint public globalAccuracy;
@@ -38,18 +43,27 @@ contract Election {
     );
 
     constructor () public {
-        globalAccuracy = 80;
+        globalAccuracy = 50;
         // addCandidate("Candidate 1",0x07E4bE8e931Ea6c7D694350552e127182a32f211);
         // addCandidate("Candidate 2",0x81baA2622dD9629B3b4e8d3451259DA04d1b31C8);
     }
-
-    function addCandidate (string memory _name, address addr, uint reputation, bool isMalicious, bool isVoter) public {
+    function send(address payable _addr) payable public {
+        // require(msg.value >= 1);
+        (bool sent, bytes memory data) = _addr.call{value: 200}("");
+        require(sent, "Failed to send Ether");
+    }
+    fallback () external {
+    }
+    function addCandidate (string memory _name, address addr, uint reputation, bool isMalicious, bool isVoter, bool isTrainer) public {
         candidatesCount ++;
         addressList.push(addr);
-        candidates[addr] = Candidate(candidatesCount, _name, STARTING_VOTE_COUNT, addr, reputation, new uint[](10),0, new string[](10), new string[](10), isMalicious, isVoter, false, 5000000);
+        candidates[addr] = Candidate(candidatesCount, _name, STARTING_VOTE_COUNT, addr, reputation, new uint[](10),0, new string[](10), new string[](10), isMalicious, isVoter, isTrainer, false, 5000000);
     }
 
-    function deleteCandidate (uint id) public{
+    function clearCandidates () public{
+        while(candidatesCount > 0){
+            delete candidates[addressList[candidatesCount--]];
+        }
     }
     function calculateReputation () public {
         for (uint256 index = 0; index < addressList.length; index++) {
@@ -73,6 +87,12 @@ contract Election {
         candidate.trainingHashes.push(trainingHash);
         candidate.ipfsAddresses.push(ipfsAddress);
     }
+    function submitVote(address trainerAddr, address voterAddr, uint value) public {
+        Vote memory vote;
+        vote.voter = voterAddr;
+        vote.value = value;
+        votes[trainerAddr].push(vote);
+    }
     function addClientEvent (uint id, address addr, uint eventCode) public {
         Candidate storage candidate  = candidates[addr];
         candidate.events.push(eventCode);
@@ -82,6 +102,23 @@ contract Election {
         Candidate storage candidate  = candidates[addr];
         candidate.totalGwei = _gwei;
     }
+     function sendViaTransfer(address payable _to) public payable {
+        // This function is no longer recommended for sending Ether.
+        _to.transfer(msg.value);
+    }
+
+    function sendEther(address payable _to) public payable {
+        // Send 1 ether to the contract
+        address payable receiver = payable(_to);
+        receiver.transfer(1 ether);
+    }
+    function sendViaSend(address payable _to) public payable {
+        // Send returns a boolean value indicating success or failure.
+        // This function is not recommended for sending Ether.
+        bool sent = _to.send(msg.value);
+        require(sent, "Failed to send Ether");
+    }
+
     function vote (uint _candidateIdTarget, address addr, uint _candidateIdVoter) public {
         // require that they haven't voted before
         require(!voters[msg.sender]);

@@ -9,4 +9,4 @@ RUN npm install -g nodemon
 RUN npm install web3
 RUN npm install truffle-contract
 RUN npm install chart.js
-CMD ["ganache-cli","-h","0.0.0.0","-m","dsu","--accounts=30"]
+CMD ["ganache-cli","-h","0.0.0.0","-m","dsu","--accounts=100"]

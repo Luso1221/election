@@ -1,7 +1,5 @@
 
-
-
-exports.doTraining = async function (SC, account, iterationCount, mode) {
+exports.doTrainingAndReview = async function (SC, account, iterationCount, mode) {
     var startTime = Date.now()
     let maliciousAccounts = [];
     let bannedAccounts = [];
@@ -18,31 +16,16 @@ exports.doTraining = async function (SC, account, iterationCount, mode) {
     let totalBannedVoters = 0;
     let totalBannedTrainers = 0;
     let trainerScores = [];
-    // let trainerAccounts = [];
 
     await SC.calculateReputation.sendTransaction({ from: account });
     let candidatesCount = await SC.candidatesCount();
     candidatesCount = candidatesCount.toNumber();
     let globalAccuracy = await SC.globalAccuracy();
     globalAccuracy = globalAccuracy.toNumber();
-    // let currentdate = new Date(); 
     console.log("Global accuracy: ", globalAccuracy, "");
-    // console.log(currentdate.getDate() + "/"
-    //                 + (currentdate.getMonth()+1)  + "/" 
-    //                 + currentdate.getFullYear() + " @ "  
-    //                 + currentdate.getHours() + ":"  
-    //                 + currentdate.getMinutes() + ":" 
-    //                 + currentdate.getSeconds());
-    // trainersCount = trainersCount.toNumber();
-
-    // console.log("Setting trainers..")
-
-    // let processTimeLabels = ["Initial phase", "Training phase", "Voting phase", "Aggregation phase"]
     let processTimes = [];
     var totalAddCandidateTime = 0;
-
-    // console.log({ trainersCount })
-    // console.log({ nHighest })
+    
     for (let i = 0; i < candidatesCount; i++) {
 
         var startAddCandidate = Date.now()
@@ -52,7 +35,6 @@ exports.doTraining = async function (SC, account, iterationCount, mode) {
         //   console.log(candidate);
         const randomValue = Math.max(0, Math.min(100, Math.floor(Math.random() * 6) + globalAccuracy));
         const randomValueMalicious = Math.max(0, Math.min(Math.floor(Math.random() * 6) + globalAccuracy - 5));
-        // console.log(randomValue,randomValueMalicious);
         maliciousAccounts.push(candidate.isMalicious);
         if (candidate.isBanned)
             bannedAccounts.push(i);
@@ -62,7 +44,6 @@ exports.doTraining = async function (SC, account, iterationCount, mode) {
                 accuracy = randomValueMalicious;
             else
                 accuracy = randomValue;
-            // candidateAccounts.push(i);
             if (candidate.isMalicious) totalMaliciousTrainers++
             else totalNonMaliciousTrainers++
             totalTrainers++
@@ -83,9 +64,6 @@ exports.doTraining = async function (SC, account, iterationCount, mode) {
         accuracyList.push(accuracy);
         gweiList.push(candidate.totalGwei);
         totalAddCandidateTime += (Date.now() - startAddCandidate);
-        //   console.log(trainers[i-1]);
-
-        // log(trainers[indexArray].accuracy);
     }
 
     let nHighest = Math.round(totalTrainers / 2);
@@ -96,20 +74,15 @@ exports.doTraining = async function (SC, account, iterationCount, mode) {
 
     }
 
-    // if(iterationCount == 0)
-    // console.log("Reputations:",reputations);
     totalAddCandidateTime /= candidatesCount;
     processTimes.push(totalAddCandidateTime);
     console.log("Voting based on accuracy..")
 
     for (let i = 0; i < totalTrainers; i++) {
         trainerScores.push(0);
-        // await SC.submitVote.sendTransaction(account, account, 5, { from: account });
 
     }
 
-    //get highest scores 
-    // let threeHighestAccuracy = getThreeHighest(accuracyList);
     let nHighestAccuracy = getNHighest(accuracyList, nHighest);
     console.log("Total voters:", voters.length);
     console.log("Evaluating..")
@@ -298,307 +271,7 @@ exports.doTraining = async function (SC, account, iterationCount, mode) {
 
     return perfTime;
 }
-// let number_of_trainers_selected = 3;
 
-
-
-
-exports.doTrainingAndReview = async function (SC, account, iterationCount, mode) {
-    var startTime = Date.now()
-    let maliciousAccounts = [];
-    let bannedAccounts = [];
-    let trainers = [];
-    let voters = [];
-    let accuracyList = [];
-    let gweiList = [];
-    let totalNonMaliciousVoters = 0;
-    let totalMaliciousVoters = 0;
-    let totalNonMaliciousTrainers = 0;
-    let totalMaliciousTrainers = 0;
-    let totalTrainers = 0;
-    let totalVoters = 0;
-    let totalBannedVoters = 0;
-    let totalBannedTrainers = 0;
-    let trainerScores = [];
-
-    await SC.calculateReputation.sendTransaction({ from: account });
-    let candidatesCount = await SC.candidatesCount();
-    candidatesCount = candidatesCount.toNumber();
-    let globalAccuracy = await SC.globalAccuracy();
-    globalAccuracy = globalAccuracy.toNumber();
-    console.log("Global accuracy: ", globalAccuracy, "");
-    let processTimes = [];
-    var totalAddCandidateTime = 0;
-    
-    for (let i = 0; i < candidatesCount; i++) {
-
-        var startAddCandidate = Date.now()
-        let address = await SC.addressList(i);
-
-        let candidate = await SC.candidates(address);
-        //   console.log(candidate);
-        const randomValue = Math.max(0, Math.min(100, Math.floor(Math.random() * 6) + globalAccuracy));
-        const randomValueMalicious = Math.max(0, Math.min(Math.floor(Math.random() * 6) + globalAccuracy - 5));
-        maliciousAccounts.push(candidate.isMalicious);
-        if (candidate.isBanned)
-            bannedAccounts.push(i);
-        let accuracy = 0;
-        if (candidate.isTrainer) {
-            if (maliciousAccounts[i])
-                accuracy = randomValueMalicious;
-            else
-                accuracy = randomValue;
-            if (candidate.isMalicious) totalMaliciousTrainers++
-            else totalNonMaliciousTrainers++
-            totalTrainers++
-            trainers.push({ addr: address, accuracy: accuracy, reputation: candidate.reputation.toNumber(), isMalicious: candidate.isMalicious, candidateId: i });
-
-            if (candidate.isBanned)
-                totalBannedTrainers++;
-        }
-        if (candidate.isVoter) {
-            voters.push({ addr: address, votes: [], reputation: candidate.reputation.toNumber(), isMalicious: candidate.isMalicious, candidateId: i })
-
-            if (candidate.isMalicious) totalMaliciousVoters++
-            else totalNonMaliciousVoters++
-            totalVoters++
-            if (candidate.isBanned)
-                totalBannedVoters++;
-        }
-        accuracyList.push(accuracy);
-        gweiList.push(candidate.totalGwei);
-        totalAddCandidateTime += (Date.now() - startAddCandidate);
-    }
-
-    let nHighest = Math.round(totalTrainers / 2);
-    console.log({ nHighest })
-    for (let i = 0; i < totalVoters; i++) {
-        voters[i].evals = Array.from({ length: totalTrainers }, (_, i) => Math.max(0, Math.min(100, Math.floor(Math.random() * 6) + globalAccuracy))
-        );
-
-    }
-
-    totalAddCandidateTime /= candidatesCount;
-    processTimes.push(totalAddCandidateTime);
-    console.log("Voting based on accuracy..")
-
-    for (let i = 0; i < totalTrainers; i++) {
-        trainerScores.push(0);
-
-    }
-
-    let nHighestAccuracy = getNHighest(accuracyList, nHighest);
-    console.log("Total voters:", voters.length);
-    console.log("Evaluating..")
-    for (let i = 0; i < voters.length; i++) {
-        if (!bannedAccounts[voters[i].candidateId]) {
-            for (let j = 0; j < trainers.length; j++) {
-                if (!bannedAccounts.includes([trainers[j].candidateId])) {
-                    // console.log("Trainer found:",trainers[j].candidate.isTrainer);
-                    let voteValue = 1;
-                    if (!voters[i].isMalicious) {
-                        if (isBetween(voters[i].evals[j] - 5, trainers[j].accuracy, voters[i].evals[j] + 5)) {
-                            voteValue = voters[i].reputation;
-                            voters[i].votes.push(j);
-                        }
-                    } else {
-                        if (trainers[j].isMalicious) {
-                            voteValue = voters[i].reputation;
-                            voters[i].votes.push(j);
-                        } else {
-                            if (isBetween(voters[i].evals[j] - 5, trainers[j].accuracy, voters[i].evals[j] + 5)) {
-                                voteValue = voters[i].reputation;
-                                voters[i].votes.push(j);
-                            }
-                        }
-                    }
-                    trainerScores[j] += parseInt(voteValue);
-
-                }
-            }
-        }
-
-
-    }
-
-    console.log("Voting..")
-    for (let i = 0; i < voters.length; i++) {
-        if (!bannedAccounts.includes(voters[i].candidateId)) {
-            for (let j = 0; j < trainers.length; j++) {
-                if (!bannedAccounts.includes([trainers[j].candidateId])) {
-                    // console.log("Trainer found:",trainers[j].candidate.isTrainer);
-
-                    if (!voters[i].isMalicious && !trainers[j].isMalicious && nHighestAccuracy.includes(j)) {
-                        voters[i].votes.push(j);
-                        trainerScores[j] = trainerScores[j] + voters[i].reputation;
-                    } else if (!voters[i].isMalicious && trainers[j].isMalicious) {
-                        voters[i].votes.push(j);
-                        trainerScores[j] = trainerScores[j] + voters[i].reputation;
-                    } else {
-                        voters[i].votes.push(j);
-                        trainerScores[j] = trainerScores[j] + voters[i].reputation;
-                    }
-                }
-            }
-        }
-
-
-    }
-
-    console.log("Selecting highest scores..")
-    //get highest scores 
-    let punishList = [];
-    if (iterationCount > 0) {
-        let nHighestScores = getNHighest(trainerScores, nHighest);
-        printNHighest(trainerScores, nHighestScores, trainers, nHighest);
-        globalAccuracy = aggregate(trainerScores, nHighestScores, trainers, nHighest);
-        console.log("Global accuracy averaged: ", globalAccuracy)
-
-        // console.log("Check voters who vote on lower scores and trainers with low accuracy..");
-        for (let i = 0; i < trainers.length; i++) {
-            if (!bannedAccounts[trainers[i].candidateId]) {
-                if (trainers[i].accuracy < trainers[nHighestScores[nHighest - 1]].accuracy) {
-                    punishList.push(i);
-                }
-            }
-        }
-        for (let i = 0; i < voters.length; i++) {
-            if (!bannedAccounts.includes(voters[i].candidateId)) {
-                for (let j = 0; j < punishList.length; j++) {
-                    if (!punishList.includes(voters[i].candidateId) && voters[i].votes.includes(j)) {
-                        punishList.push(i);
-                    }
-                }
-            }
-        }
-        console.log("Calculating trainers reputation..");
-
-
-        for (let i = 0; i < trainers.length; i++) {
-            if (!bannedAccounts[i]) {
-                if (punishList.includes(i)) {
-                    // console.log(trainers[i])
-                    await SC.setReputation.sendTransaction(trainers[i].addr, trainers[i].reputation - 10, { from: account });
-
-                    trainers[i].reputations -= 10
-                } else {
-                    await SC.setReputation.sendTransaction(trainers[i].addr, trainers[i].reputation + 10, { from: account });
-
-                    trainers[i].reputations -= 10
-                }
-                let newGwei = Math.round(parseInt(gweiList[i]) + parseInt(gweiList[i] * trainers[i].reputation / 1000));
-                // console.log(newGwei)
-                gweiList[i] = newGwei;
-                await SC.setGwei.sendTransaction(trainers[i].addr, newGwei, { from: account });
-            }
-
-
-        }
-    }
-    console.log("Calculating voters reputation..");
-
-
-    if (iterationCount > 0) {
-        for (let i = 0; i < voters.length; i++) {
-            if (!bannedAccounts.includes(voters[i].candidateId)) {
-                if (punishList.includes(i)) {
-                    await SC.setReputation.sendTransaction(voters[i].addr, voters[i].reputation - 10, { from: account });
-
-                    voters[i].reputation = voters[i].reputation - 10
-                } else {
-                    await SC.setReputation.sendTransaction(voters[i].addr, voters[i].reputation + 10, { from: account });
-
-                    voters[i].reputation = voters[i].reputation + 10
-                }
-
-                let newGwei = Math.round(parseInt(gweiList[i]) + parseInt(gweiList[i] * voters[i].reputation / 1000));
-                // console.log(newGwei)
-                gweiList[i] = newGwei;
-                await SC.setGwei.sendTransaction(voters[i].addr, newGwei, { from: account });
-            }
-
-        }
-    }
-    console.log("Setting new accuracy..");
-    console.log("Global accuracy: ", globalAccuracy);
-    await SC.setGlobalAccuracy.sendTransaction(globalAccuracy.toFixed(0), { from: account });
-    console.log("Finish iteration, returning values");
-
-    var endTime = Date.now()
-
-    var perfTime = endTime - startTime;
-    console.log(`doTraining takes ${perfTime} milliseconds`)
-    // let averageReputation = { mv: 0, nmv: 0, mt: 0, nmt: 0 };
-    // let totalReputation = { mv: 0, nmv: 0, mt: 0, nmt: 0 };
-    // let reputationArr = { mv: [], nmv: [], mt: [], nmt: [] }
-    // let averageGwei = { mv: 0, nmv: 0, mt: 0, nmt: 0 };
-    // for (let i = 0; i < totalTrainers; i++) {
-    //     if (trainers[i].isMalicious) {
-
-    //         averageReputation.mt += trainers[i].reputation / totalMaliciousVoters;
-    //         totalReputation.mt += trainers[i].reputation;
-    //         reputationArr.mt.push(trainers[i].reputation);
-    //         averageGwei.mt += gweiList[i] / totalMaliciousVoters;
-    //     } else {
-
-    //         averageReputation.nmt += trainers[i].reputation / totalNonMaliciousVoters;
-    //         totalReputation.nmt += trainers[i].reputation;
-    //         reputationArr.nmt.push(trainers[i].reputation);
-    //         averageGwei.nmt += gweiList[i] / totalNonMaliciousVoters;
-
-    //     }
-
-    // }
-    // for (let i = 0; i < totalVoters; i++) {
-    //     if (voters[i].isMalicious) {
-
-    //         averageReputation.mv += voters[i].reputation / totalMaliciousVoters;
-    //         totalReputation.mv += voters[i].reputation;
-    //         reputationArr.mv.push(voters[i].reputation);
-    //         averageGwei.mv += gweiList[i] / totalMaliciousVoters;
-    //     } else {
-
-    //         averageReputation.nmv += voters[i].reputation / totalMaliciousVoters;
-    //         totalReputation.nmv += voters[i].reputation;
-    //         reputationArr.nmv.push(voters[i].reputation);
-    //         averageGwei.nmv += gweiList[i] / totalMaliciousVoters;
-    //     }
-
-    //     // const FileSystem = require("fs");
-    //     // FileSystem.writeFile('error.json', "iteration " + i, (error) => {
-    //     //    if (error) throw error;
-    //     //  });
-    // }
-
-    return perfTime;
-}
-
-exports.takeSnapshot = (web3) => {
-    return new Promise((resolve, reject) => {
-        web3.currentProvider.send({
-            jsonrpc: '2.0',
-            method: 'evm_snapshot',
-            id: new Date().getTime()
-        }, (err, snapshotId) => {
-            if (err) { return reject(err) }
-            return resolve(snapshotId)
-        })
-    })
-}
-
-exports.revertToSnapShot = (web3, id) => {
-    return new Promise((resolve, reject) => {
-        web3.currentProvider.send({
-            jsonrpc: '2.0',
-            method: 'evm_revert',
-            params: [id],
-            id: new Date().getTime()
-        }, (err, result) => {
-            if (err) { return reject(err) }
-            return resolve(result)
-        })
-    })
-}
 
 function getNHighest(intArr, n) {
 
@@ -650,20 +323,6 @@ function aggregate(scores, highest, trainers, n) {
         totalAccuracy = totalAccuracy + weight;
     }
     return totalAccuracy;
-}
-exports.assignMalicious = function (number_of_clients, ratio) {
-    const number_of_malicious = ratio * number_of_clients;
-    let malicious_entities = [];
-
-    while (true) {
-        const malicious_entity = between(0, number_of_clients - 1);
-        if (malicious_entities.includes(malicious_entity) == false) {
-            malicious_entities.push(malicious_entity);
-            if (malicious_entities.length >= number_of_malicious) break;
-        }
-    }
-
-    return malicious_entities;
 }
 
 function between(min, max) {
