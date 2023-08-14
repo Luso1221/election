@@ -431,7 +431,7 @@ async function run(SC, account, number_of_clients, clients) {
 
     for (let i = 0; i < clients.length; i++) {
         await SC.gainExperience.sendTransaction(clients[i].address, { from: account });
-        await SC.saveCreditEvent.sendTransaction(clients[i].address, { from: account });
+        // await SC.saveCreditEvent.sendTransaction(clients[i].address, { from: account });
     }
 
     // console.log(`================== CALCULATING REVIEWER CONTRIBUTION ==================`);

@@ -1,8 +1,9 @@
 <div id="content"></div>
 
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script type="text/javascript">  
     var content = document.getElementById('content');
-    var socket = new WebSocket('ws://localhost:3001');
+    var socket = new WebSocket('ws://localhost:3000');
     socket.onopen = function () {
         socket.send('hello from the client');
     };

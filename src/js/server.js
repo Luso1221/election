@@ -8,7 +8,6 @@ const trainingReview = require('./training-review');
 const TruffleContract = require('truffle-contract');
 const ElectionJSON = require('../../build/contracts/Election.json'); // import your compiled contract JSON
 const AdminJSON = require('../../build/contracts/Admin.json'); // import your compiled contract JSON
-
 const web3 = new Web3('http://localhost:8545'); // assuming you're using Ganache CLI on the default port
 const NUMBER_OF_ITERATIONS = 11;
 const Election = TruffleContract(ElectionJSON);
@@ -195,6 +194,7 @@ app.get('/test', async(req,res)=>{
   //    if (error) throw error;
   //  });
   await helpers.revertToSnapShot(web3,startingSnapshot['result']);
+  console.log("Finished all the training")
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -256,6 +256,7 @@ app.get('/result', async (req, res) => {
     await helpers.revertToSnapShot(web3,repeatSnapshot['result']);
   }
   await helpers.revertToSnapShot(web3,startingSnapshot['result']);
+  console.log("Finished all the training")
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
